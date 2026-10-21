@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#24598C">
+<title>Linha de exames</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<script>
+try { const t = localStorage.getItem("linhaExames.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch(e){}
+</script>
+<style>
+:root{
+  --bg:#EEF3F6; --surface:#FFFFFF; --ink:#1C2A33; --muted:#5B6B75; --line:#D3DDE3; --accent:#24598C; --accent-ink:#FFFFFF; --warn:#B3261E; --warn-bg:#FCEBEA; --alt:#C00000;
+  --edta:#8E6CC9; --soro:#D4A11E; --citrato:#4FA6D8; --heparina:#3E9B5F; --fluoreto:#8A949A; --preto:#3A3F44; --urina:#E3B505; --gram:#B0476A;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14202A; --surface:#1B2A35; --ink:#E4ECF0; --muted:#93A5AF; --line:#2C3E4A; --accent:#7FB0E0; --accent-ink:#0F1A22; --warn:#F2B8B5; --warn-bg:#3A2224; --alt:#FF8A80;
+    --preto:#B8C0C6;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14202A; --surface:#1B2A35; --ink:#E4ECF0; --muted:#93A5AF; --line:#2C3E4A; --accent:#7FB0E0; --accent-ink:#0F1A22; --warn:#F2B8B5; --warn-bg:#3A2224; --alt:#FF8A80;
+  --preto:#B8C0C6; color-scheme:dark;
+}
+:root[data-theme="light"]{color-scheme:light}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.theme{display:inline-flex;margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.theme button{border:0;background:var(--surface);color:var(--muted);padding:6px 10px;font:inherit;font-size:.82rem;cursor:pointer}
+.theme button+button{border-left:1px solid var(--line)}
+.theme button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.theme button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+.wrap{max-width:680px;margin:0 auto;padding:20px 16px 190px}
+h1{font-size:1.6rem;line-height:1.15;font-weight:700;letter-spacing:-.01em;margin:8px 0 4px}
+.lede{margin:0 0 18px;color:var(--muted);max-width:52ch}
+textarea,input,select,button{font:inherit;color:inherit}
+#src{width:100%;min-height:150px;resize:vertical;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:.92rem;line-height:1.4}
+#src:focus,input:focus,select:focus,#out:focus{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:18px 0 8px}
+.opts label{min-width:0;display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.opts input,.opts select{width:100%;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:1rem;color:var(--ink)}
+.status{margin:20px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.status p{margin:0;color:var(--muted);font-size:.9rem}
+.status .row{margin:0}
+.status .btn{padding:5px 10px;font-size:.85rem}
+.group{margin-top:16px}
+.group h2{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:650;margin:0 0 8px}
+.tube{width:14px;height:24px;position:relative;flex:none}
+.tube::before{content:"";position:absolute;left:0;top:0;width:14px;height:8px;border-radius:3px 3px 1px 1px;background:var(--c)}
+.tube::after{content:"";position:absolute;left:2px;top:8px;width:10px;height:16px;border:1.5px solid var(--line);border-top:0;border-radius:0 0 5px 5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{position:relative;display:inline-flex;align-items:baseline;gap:6px;padding:7px 11px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;user-select:none;font-variant-numeric:tabular-nums}
+.chip input{position:absolute;opacity:0;width:1px;height:1px}
+.chip .ab{font-weight:650}
+.chip:has(input:checked){border-color:var(--c)}
+.chip:has(input:not(:checked)){color:var(--muted)}
+.chip:has(input:not(:checked)) .v{text-decoration:line-through}
+.chip:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.chip.suspect{border-style:dashed;border-color:var(--warn);background:var(--warn-bg)}
+.chip.suspect .ab::before{content:"! ";color:var(--warn)}
+.alert{margin:16px 0 0;padding:12px 14px;border-radius:10px;background:var(--warn-bg);border:1px solid var(--warn);font-size:.92rem}
+.alert strong{color:var(--warn)}
+.alert p{margin:0}
+.alert p+p{margin-top:6px}
+details.src{margin-top:22px;font-size:.88rem}
+details.src summary{cursor:pointer;color:var(--accent);padding:4px 0}
+details.src ul{list-style:none;margin:8px 0 0;padding:0;border-top:1px solid var(--line)}
+details.src li{padding:7px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(80px,auto) 1fr;gap:10px}
+details.src li b{font-variant-numeric:tabular-nums}
+details.src code{font-family:inherit;color:var(--muted);overflow-wrap:anywhere}
+.empty{color:var(--muted);margin:22px 0;padding:16px;border:1px dashed var(--line);border-radius:10px}
+.out{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px rgba(20,32,42,.08)}
+.out-in{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:stretch}
+#out{flex:1;min-height:64px;max-height:30vh;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:.95rem;line-height:1.4;font-variant-numeric:tabular-nums;white-space:pre-wrap;overflow-wrap:anywhere}
+#out:empty::before{content:attr(data-placeholder);color:var(--muted)}
+#out .alt{color:var(--alt);font-weight:700}
+.chip.altered .v{color:var(--alt);font-weight:700}
+.chip.altered{border-color:var(--alt)}
+details.src li .ref{grid-column:2;font-size:.82rem;color:var(--muted)}
+details.src li .ref.alt{color:var(--alt)}
+#copy{flex:none;border:0;border-radius:8px;padding:0 18px;background:var(--accent);color:var(--accent-ink);font-weight:650;cursor:pointer;min-width:96px}
+#copy:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#copy:disabled{opacity:.45;cursor:default}
+.note{font-size:.8rem;color:var(--muted);margin-top:28px}
+@media (max-width:380px){.opts{grid-template-columns:1fr}}
+.opts .wide{grid-column:1 / -1}
+.panel{margin-top:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 14px}
+.panel summary{cursor:pointer;padding:10px 0;font-weight:600}
+.panel[open]{padding-bottom:12px}
+.panel ol{margin:0 0 8px;padding-left:20px}
+.panel li+li{margin-top:6px}
+.panel p{margin:6px 0 0}
+.check{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:7px 0;border-top:1px solid var(--line);font-size:.92rem;cursor:pointer}
+.check input{width:18px;height:18px;margin:0;align-self:center;accent-color:var(--accent)}
+.check .t{flex:1 1 0;min-width:0;font-weight:400}
+.check span{flex-basis:100%;padding-left:26px;font-size:.8rem;color:var(--muted)}
+.muted{color:var(--muted);font-size:.85rem}
+.fmt{margin:4px 0 0;font-size:.82rem;color:var(--muted)}
+#filter{width:100%;margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:.95rem}
+.chip .prev{font-size:.78rem;color:var(--muted);font-weight:400}
+.hist{margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+.hist-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.hist h2{font-size:1.05rem;margin:0}
+.hist .btn{padding:5px 10px;font-size:.85rem}
+.hist details{border-bottom:1px solid var(--line)}
+.hist summary{cursor:pointer;padding:9px 0;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.hist summary::-webkit-details-marker{display:none}
+.hist summary b{font-weight:600}
+.hist summary small{color:var(--muted)}
+.hrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:7px 0;border-top:1px dashed var(--line);font-size:.85rem}
+.hrow .d{font-variant-numeric:tabular-nums;color:var(--muted)}
+.hrow .l{overflow-wrap:anywhere}
+.hrow .btn{padding:3px 8px;font-size:.8rem}
+.hist .evo-btn{margin:4px 0 10px}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:16px;max-width:min(960px,calc(100vw - 24px));width:100%}
+dialog::backdrop{background:rgba(10,18,24,.45)}
+dialog h2{font-size:1.05rem;margin:0 0 8px}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.evo-wrap{overflow:auto;max-height:70vh}
+.evo{border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums;min-width:100%}
+.evo th,.evo td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.evo th:first-child,.evo td:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
+.evo td.alt{color:var(--alt);font-weight:700}
+.evo .tr{color:var(--muted);font-size:.75rem;margin-left:3px}
+.spark{display:block}
+.spark path{fill:none;stroke:var(--accent);stroke-width:1.5}
+.spark circle{fill:var(--accent)}
+.btn.danger{background:var(--alt);border-color:var(--alt);color:#fff}
+#testout{white-space:pre-wrap;font-size:.8rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:320px;overflow:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Linha de exames</h1>
+    <div class="theme" role="group" aria-label="Tema">
+      <button type="button" data-t="auto">Auto</button>
+      <button type="button" data-t="light">Claro</button>
+      <button type="button" data-t="dark">Escuro</button>
+    </div>
+  </div>
+  <p class="lede">Cole o laudo, escolha os exames e copie a linha para a evolução. Tudo roda neste aparelho, sem internet e sem conta.</p>
+
+  <details class="panel" id="help">
+    <summary>Como usar</summary>
+    <ol>
+      <li>Abra o laudo (PDF ou site do laboratório), aperte <b>Ctrl+A</b> e <b>Ctrl+C</b>, e cole aqui com <b>Ctrl+V</b>.</li>
+      <li>Os exames aparecem agrupados. Toque num exame para tirá-lo da linha ou colocá-lo de volta; o app lembra das suas escolhas.</li>
+      <li>Valores fora da referência do laboratório ficam em vermelho, com ↑ ou ↓. Abra "Ver de onde veio cada valor" para conferir a linha do laudo e a referência usada.</li>
+      <li>Toque em <b>Copiar</b> e cole no prontuário. Prontuários que aceitam texto formatado recebem o vermelho; os outros recebem as setas.</li>
+      <li>Com o histórico ligado, cada laudo fica salvo neste aparelho. Laudos seguintes do mesmo paciente podem mostrar o valor anterior e a tabela de evolução.</li>
+    </ol>
+    <p>O app ajuda, mas não substitui a leitura do laudo original.</p>
+  </details>
+
+  <textarea id="src" placeholder="Cole aqui o texto do laudo" aria-label="Texto do laudo"></textarea>
+  <div class="row">
+    <button class="btn" id="clear" type="button">Limpar</button>
+    <button class="btn" id="sample" type="button">Testar com exemplo</button>
+  </div>
+
+  <div class="opts">
+    <label class="wide">Paciente<input id="pname" placeholder="lido do laudo" autocomplete="off"></label>
+    <label>Data da coleta<input id="date" placeholder="dd/mm" inputmode="numeric"></label>
+    <label>Prefixo<input id="prefix" value="LAB"></label>
+    <label class="wide">Data na linha
+      <select id="dfmt">
+        <option value="paren">LAB (24/09):</option>
+        <option value="plain">LAB 24/09:</option>
+        <option value="bracket">LAB [24/09]:</option>
+        <option value="dash">LAB – 24/09:</option>
+        <option value="de">LAB de 24/09:</option>
+        <option value="yy">LAB (24/09/26):</option>
+        <option value="yyyy">LAB 24/09/2026:</option>
+        <option value="mon">LAB 24/set:</option>
+        <option value="dow">LAB 24/09 (qua):</option>
+        <option value="rel">LAB (ontem, 24/09):</option>
+        <option value="first">24/09 – LAB:</option>
+        <option value="firstparen">(24/09) LAB:</option>
+        <option value="none">LAB: (sem data)</option>
+      </select>
+    </label>
+    <label>Idade (anos)<input id="age" inputmode="decimal" placeholder="lida do laudo"></label>
+    <label>Sexo
+      <select id="sex">
+        <option value="">Não informado</option>
+        <option value="M">Masculino</option>
+        <option value="F">Feminino</option>
+      </select>
+    </label>
+    <label>Separador
+      <select id="sep">
+        <option value=" / ">Hb 14 / Ht 42</option>
+        <option value=" | ">Hb 14 | Ht 42</option>
+        <option value="; ">Hb 14; Ht 42</option>
+        <option value=" ">Hb 14 Ht 42</option>
+      </select>
+    </label>
+    <label>Alterados na linha
+      <select id="mark">
+        <option value="both">Vermelho e ↑↓</option>
+        <option value="red">Só vermelho</option>
+        <option value="arrow">Só ↑↓</option>
+        <option value="star">Asterisco (*)</option>
+        <option value="none">Não marcar</option>
+      </select>
+    </label>
+    <label>Diferencial do leucograma
+      <select id="diff">
+        <option value="pct">Em %</option>
+        <option value="abs">Valor absoluto</option>
+      </select>
+    </label>
+  </div>
+
+  <details class="panel" id="more">
+    <summary>Mais opções</summary>
+    <label class="check"><input type="checkbox" id="o-prev"> <b class="t">Mostrar o valor anterior do mesmo paciente</b> <span>CT 245↑ (ant. 220)</span></label>
+    <label class="check"><input type="checkbox" id="o-compact"> <b class="t">Urina e gasometria só com os alterados</b> <span>U1: Bact &gt;20.000↑, demais s/a</span></label>
+    <label class="check"><input type="checkbox" id="o-group"> <b class="t">Agrupar frações</b> <span>BT 1,2 (BD 0,3, BI 0,9) · PTN 6,9 (Alb 4,5, Glob 2,4)</span></label>
+    <label class="check"><input type="checkbox" id="o-upper"> <b class="t">Linha toda em maiúsculas</b></label>
+    <label class="check"><input type="checkbox" id="o-defaults"> <b class="t">Usar referências padrão do app quando o laudo não trouxer</b> <span>sempre indicadas como "padrão do app"</span></label>
+    <label class="check"><input type="checkbox" id="o-hist"> <b class="t">Guardar histórico neste aparelho</b> <span>fica só neste navegador</span></label>
+  </details>
+
+  <div class="status">
+    <p id="count">Nenhum laudo colado ainda.</p>
+    <div class="row" id="bulk" hidden>
+      <button class="btn" id="all" type="button">Marcar todos</button>
+      <button class="btn" id="none" type="button">Desmarcar todos</button>
+    </div>
+  </div>
+  <p class="fmt" id="fmt" hidden></p>
+  <input id="filter" type="search" placeholder="Buscar exame" aria-label="Buscar exame na lista" hidden>
+  <div id="alerts"></div>
+  <div id="found"></div>
+  <details class="src" id="srcbox" hidden><summary>Ver de onde veio cada valor</summary><ul id="srclist"></ul></details>
+
+  <section class="hist" id="histbox">
+    <div class="hist-head">
+      <h2>Histórico</h2>
+      <div class="row">
+        <button class="btn" id="evo-current" type="button" disabled>Evolução deste paciente</button>
+        <button class="btn" id="hist-clear" type="button">Apagar histórico</button>
+      </div>
+    </div>
+    <p class="muted" id="hist-empty">Nenhum laudo salvo ainda.</p>
+    <div id="hist-list"></div>
+  </section>
+
+  <details class="panel" id="tools">
+    <summary>Ferramentas</summary>
+    <div class="row">
+      <button class="btn" id="dl" type="button">Baixar para uso offline</button>
+      <button class="btn" id="diag" type="button">Copiar relatório de diagnóstico</button>
+      <button class="btn" id="selftest" type="button">Rodar testes embutidos</button>
+    </div>
+    <p class="muted">O relatório de diagnóstico não inclui o nome do paciente. Mande-o quando algum exame sair errado.</p>
+    <pre id="testout" hidden></pre>
+  </details>
+
+  <p class="note">Os exames que você desmarca ficam desmarcados nas próximas vezes. Confira sempre os valores no laudo original.</p>
+</div>
+
+<dialog id="evo" aria-labelledby="evo-title">
+  <div class="dlg-head"><h2 id="evo-title">Evolução</h2><button class="btn" type="button" data-close>Fechar</button></div>
+  <div class="evo-wrap" id="evo-body"></div>
+</dialog>
+<dialog id="confirm" aria-labelledby="confirm-title">
+  <h2 id="confirm-title">Apagar o histórico?</h2>
+  <p>Todos os laudos salvos neste aparelho serão apagados. Isso não pode ser desfeito.</p>
+  <div class="row"><button class="btn danger" type="button" id="confirm-yes">Apagar</button><button class="btn" type="button" data-close>Cancelar</button></div>
+</dialog>
+
+<div class="out">
+  <div class="out-in">
+    <div id="out" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Linha pronta para copiar" data-placeholder="A linha formatada aparece aqui"></div>
+    <button id="copy" type="button" disabled>Copiar</button>
+  </div>
+</div>
+
+<script>
+// PARSER-START
+const CATS = {
+  edta:{name:"Hemograma", c:"var(--edta)"},
+  soro:{name:"Bioquímica e hormônios", c:"var(--soro)"},
+  sorol:{name:"Sorologias", c:"var(--soro)"},
+  citrato:{name:"Coagulação", c:"var(--citrato)"},
+  heparina:{name:"Gasometria", c:"var(--heparina)"},
+  fluoreto:{name:"Glicose", c:"var(--fluoreto)"},
+  preto:{name:"VHS", c:"var(--preto)"},
+  urina:{name:"Urina tipo I", c:"var(--urina)", seg:"U1"},
+  gram:{name:"Bacterioscópico de urina", c:"var(--gram)", seg:"Gram U"},
+  gasoA:{name:"Gasometria arterial", c:"var(--heparina)", seg:"Gaso art"},
+  gasoV:{name:"Gasometria venosa", c:"var(--heparina)", seg:"Gaso ven"},
+  cult:{name:"Culturas", c:"var(--gram)"}
+};
+// Sorologias: aceita "Toxoplasmose, anticorpos IgG", "Anticorpos anti-toxoplasma IgG", "Citomegalovírus (CMV) - IgM", "Toxo IgG"
+function sero(names, cls){
+  const s = "[ ,\\-:]*";
+  return "(?:anticorpos? )?(?:anti ?-? ?)?(?:"+names+")"+s+"(?:\\([a-z0-9 ]+\\)"+s+")?(?:\\(?anticorpos?\\)?"+s+")?(?:anti ?-? ?(?:"+names+")"+s+")?(?:\\(?anticorpos?\\)?"+s+")?(?:da classe |classe )?\\(?"+cls+"\\)?";
+}
+// [abreviação, tubo, padrões (texto sem acento, minúsculo), é diferencial]
+const EX = [
+  ["Hb","edta","hemoglobina|hb"],
+  ["Ht","edta","hematocrito|ht"],
+  ["Hm","edta","hemacias|eritrocitos|hm"],
+  ["VCM","edta","vcm|volume corpuscular medio"],
+  ["HCM","edta","hcm|hemoglobina corpuscular media"],
+  ["CHCM","edta","chcm|concentracao de hemoglobina corpuscular media|concentracao da hemoglobina corpuscular media"],
+  ["RDW","edta","rdw(?:-cv)?"],
+  ["Leuco","edta","leucocitos(?: totais)?|leuco"],
+  ["Bast","edta","bastonetes|bastoes",1],
+  ["Seg","edta","segmentados",1],
+  ["Neut","edta","neutrofilos(?: totais)?",1],
+  ["Linf","edta","linfocitos(?: tipicos| totais)?",1],
+  ["Atíp","edta","linfocitos atipicos|atipicos",1],
+  ["Blastos","edta","blastos",1],
+  ["Promielócitos","edta","promielocitos",1],
+  ["Mielócitos","edta","mielocitos",1],
+  ["Metamielócitos","edta","metamielocitos",1],
+  ["Mono","edta","monocitos",1],
+  ["Eos","edta","eosinofilos",1],
+  ["Baso","edta","basofilos",1],
+  ["Plaq","edta","plaquetas|contagem de plaquetas"],
+  ["Retic","edta","reticulocitos"],
+  ["HbA1c","edta","hemoglobina glicada|hemoglobina glicosilada|hba1c|a1c"],
+  ["Ur","soro","ureia|ur"],
+  ["Cr","soro","creatinina|cr"],
+  ["TFG","soro","(?:(?:estimativa da )?(?:taxa|ritmo) de filtracao glomerular|filtracao glomerular|e?gfr|e?tfg ?e?|rfg ?e?|clearance (?:de creatinina )?estimado)(?: estimad[ao]| calculad[ao])?(?:\\s*\\(?\\s*e?(?:tfg|rfg|gfr)e?\\s*\\)?)?(?:[ ,\\-–:]*\\(?\\s*(?:ckd ?-? ?epi|mdrd|cockcroft(?:[ -]gault)?)(?:\\s*(?:versao\\s*)?20\\d\\d)?\\s*\\)?)?"],
+  ["Na","soro","sodio|na"],
+  ["K","soro","potassio|k"],
+  ["Cl","soro","cloreto|cloro|cl"],
+  ["Mg","soro","magnesio|mg(?!\\s*\\/)"],
+  ["Ca","soro","calcio(?: total)?|ca"],
+  ["CaI","soro","calcio ionico|calcio ionizado|ca ionico|cai"],
+  ["P","soro","fosforo|fosfato"],
+  ["AU","soro","acido urico"],
+  ["TGO","soro","tgo|ast|aspartato aminotransferase|transaminase oxalacetica"],
+  ["TGP","soro","tgp|alt|alanina aminotransferase|transaminase piruvica"],
+  ["GGT","soro","gama ?gt|ggt|gama ?glutamil ?transferase|gamaglutamiltransferase"],
+  ["FA","soro","fosfatase alcalina|fa"],
+  ["BT","soro","bilirrubina total|bt"],
+  ["BD","soro","bilirrubina direta|bd"],
+  ["BI","soro","bilirrubina indireta|bi"],
+  ["PTN","soro","proteinas? tota(?:l|is)"],
+  ["Alb","soro","albumina"],
+  ["Glob","soro","globulinas?"],
+  ["A/G","soro","(?:razao|relacao) (?:albumina ?/ ?globulina|a ?/ ?g)"],
+  ["Amil","soro","amilase"],
+  ["Lip","soro","lipase"],
+  ["LDH","soro","ldh|desidrogenase latica|lactato desidrogenase|desidrogenase lactica"],
+  ["CPK","soro","cpk|ck|creatinoquinase|creatina ?quinase|creatinofosfoquinase"],
+  ["CKMB","soro","ck-? ?mb|cpk-? ?mb"],
+  ["Trop","soro","troponina(?: [it])?(?: ultrassensivel| us| hs)?"],
+  ["PCR","soro","pcr|proteina c reativa"],
+  ["PCT","soro","procalcitonina"],
+  ["CT","soro","colesterol total|ct"],
+  ["HDL","soro","hdl(?: colesterol)?|colesterol hdl"],
+  ["LDL","soro","ldl(?: colesterol)?|colesterol ldl"],
+  ["VLDL","soro","vldl(?: colesterol)?|colesterol vldl"],
+  ["TG","soro","triglicerides|triglicerideos|tg"],
+  ["TSH","soro","tsh|hormonio tireoestimulante"],
+  ["T4L","soro","t4 livre|t4l"],
+  ["T3","soro","t3(?: total)?|triiodotironina"],
+  ["T3L","soro","t3 livre|t3l|triiodotironina livre"],
+  ["Anti-TPO","soro","anticorpos? anti ?-? ?(?:tpo|peroxidase)|anti ?-? ?(?:tpo|peroxidase)"],
+  ["Anti-Tg","soro","anticorpos? anti ?-? ?(?:tireoglobulina|tg)|anti ?-? ?(?:tireoglobulina|tg)"],
+  ["Tg","soro","tireoglobulina"],
+  ["PRL","soro","prolactina"],
+  ["Cortisol","soro","cortisol"],
+  ["PTH","soro","pth|paratormonio"],
+  ["Insulina","soro","insulina"],
+  ["bHCG","soro","beta ?-? ?hcg|b ?-? ?hcg|gonadotrofina corionica"],
+  ["PSA","soro","psa(?: total)?|antigeno prostatico especifico"],
+  ["CEA","soro","cea|antigeno carcinoembrionario"],
+  ["AFP","soro","alfa ?-? ?fetoproteina|afp"],
+  ["CA 19-9","soro","ca ?19 ?-? ?9"],
+  ["CA 125","soro","ca ?-? ?125"],
+  ["CA 15-3","soro","ca ?15 ?-? ?3"],
+  ["Ferritina","soro","ferritina"],
+  ["Transferrina","soro","transferrina"],
+  ["IST","soro","indice de saturacao (?:de|da) transferrina|saturacao (?:de|da) transferrina|ist"],
+  ["CTLF","soro","capacidade total de (?:ligacao|fixacao) do ferro|ctlf|tibc"],
+  ["Fe","soro","ferro(?: serico)?|fe"],
+  ["B12","soro","vitamina b12|b12|cobalamina"],
+  ["Folato","soro","acido folico|folato(?: serico)?"],
+  ["VitD","soro","vitamina d(?:[ ,]*\\(?25 ?-? ?(?:oh|hidroxi)\\)?)?|25 ?-? ?oh vitamina d|25 ?-? ?hidroxi ?vitamina d"],
+  ["BNP","soro","bnp"],
+  ["NT-proBNP","soro","nt ?-? ?pro ?-? ?bnp"],
+  ["TP","citrato","tp|tempo de protrombina"],
+  ["AP","citrato","atividade de protrombina|atividade"],
+  ["INR","citrato","inr|rni"],
+  ["R TP","citrato","relacao (?:paciente ?/ ?normal|do tp|tp|normatizada)|r\\.? ?tp"],
+  ["R TTPA","citrato","relacao (?:do )?ttpa|r\\.? ?ttpa"],
+  ["TTPA","citrato","ttpa|tempo de tromboplastina parcial ativad[ao]|kptt|aptt"],
+  ["Fib","citrato","fibrinogenio"],
+  ["DD","citrato","d ?-? ?dimero|dimero d"],
+  ["pH","heparina","ph"],
+  ["pCO2","heparina","pco2|p co2|pressao parcial de co2"],
+  ["pO2","heparina","po2|p o2|pressao parcial de o2"],
+  ["HCO3","heparina","hco3-?|bicarbonato(?: padrao| real)?"],
+  ["BE","heparina","be|excesso de bases?|base excess"],
+  ["SatO2","heparina","sat ?o2|so2|saturacao(?: de o2| de oxigenio)?"],
+  ["Lac","heparina","lactato|acido latico|acido lactico"],
+  ["Gli","fluoreto","glicose(?: de jejum| plasmatica| serica)?|glicemia(?: de jejum)?"],
+  ["GME","fluoreto","glicose media estimada|\\(?gme\\)?|\\(?eag\\)?"],
+  ["VHS","preto","vhs|velocidade de hemossedimentacao"],
+  ["Toxo IgG","sorol",sero("toxoplasmose|toxoplasma(?: gondii)?|toxo","igg")],
+  ["Toxo IgM","sorol",sero("toxoplasmose|toxoplasma(?: gondii)?|toxo","igm")],
+  ["Rubéola IgG","sorol",sero("rubeola","igg")],
+  ["Rubéola IgM","sorol",sero("rubeola","igm")],
+  ["CMV IgG","sorol",sero("citomegalovirus|cmv","igg")],
+  ["CMV IgM","sorol",sero("citomegalovirus|cmv","igm")],
+  ["HIV","sorol","(?:anticorpos? )?(?:anti ?-? ?)?hiv(?: ?1 ?(?:e|\\+|/) ?2)?(?:[ ,\\-]*(?:\\(?anticorpos?\\)?|antigenos?|ag ?/ ?ac|4a geracao|elisa|teste rapido))*"],
+  ["HBsAg","sorol","(?:hepatite b[ ,\\-–:]*)?hbsag|antigeno de superficie(?: do virus)?(?: da hepatite b)?"],
+  ["Anti-HBs","sorol","(?:hepatite b,? )?(?:anticorpos? )?anti ?-? ?hbs"],
+  ["Anti-HBc","sorol","(?:hepatite b,? )?(?:anticorpos? )?anti ?-? ?hbc(?: total)?"],
+  ["Anti-HBc IgM","sorol","(?:hepatite b,? )?(?:anticorpos? )?anti ?-? ?hbc[ ,\\-]*\\(?igm\\)?"],
+  ["Anti-HCV","sorol","(?:hepatite c[ ,\\-–:]*)?(?:anticorpos? )?anti ?-? ?hcv|hcv,? anticorpos?|hepatite c(?:[ ,\\-–:]*(?:anticorpos?|sorologia|triagem))?"],
+  ["VDRL","sorol","vdrl"],
+  ["FTA-Abs","sorol","fta ?-? ?abs(?: ig[gm])?"],
+  ["Trep","sorol","(?:sifilis[ ,\\-–:]*)?(?:teste )?treponemico|(?:anticorpos? )?anti ?-? ?treponema(?: pallidum)?|treponema pallidum"]
+].map(mk);
+function mk([ab,cat,src,flag]){
+  return {ab, cat, key:(CATS[cat].seg ? cat+":" : "")+ab, diff:flag===1, text:flag==="t",
+          re:new RegExp("^[\\s\\-–•*·>|]*(?:dosagem (?:serica |plasmatica |sanguinea )?(?:de |do |da )?)?" + (cat === "sorol" ? "(?:sorologia (?:para |de |do |da |anti ?-? ?)?)?" : "") + "(?:"+src+")(?![a-z])")};
+}
+// Dentro de um bloco de urina, os nomes valem para a urina e não para o sangue
+const EXU = [
+  ["Cor","urina","cor","t"],
+  ["Aspecto","urina","aspecto","t"],
+  ["Dens","urina","densidade(?: urinaria)?"],
+  ["pH","urina","ph"],
+  ["Prot","urina","proteinas?"],
+  ["Glic","urina","glicose"],
+  ["Cetonas","urina","corpos cetonicos|cetonas"],
+  ["Bili","urina","pigmentos biliares|bilirrubinas?"],
+  ["Urob","urina","urobilinogenio"],
+  ["Nitrito","urina","nitritos?"],
+  ["Hb","urina","hemoglobina|sangue"],
+  ["Leuco","urina","leucocitos|piocitos"],
+  ["Hm","urina","hemacias|eritrocitos"],
+  ["Bact","urina","bacterias|flora bacteriana"],
+  ["Células","urina","celulas(?: epiteliais)?"],
+  ["Cilindros","urina","cilindros"],
+  ["Cristais","urina","cristais"],
+  ["Muco","urina","filamentos de muco|muco"],
+  ["Leveduras","urina","leveduras"]
+].map(mk);
+const EXG = [
+  ["CG+","gram","cocos gram ?(?:\\+|positivos?)"],
+  ["CG-","gram","cocos gram ?(?:-|negativos?)"],
+  ["BGN","gram","bacilos gram ?(?:-|negativos?)"],
+  ["BG+","gram","bacilos gram ?(?:\\+|positivos?)"],
+  ["Leveduras","gram","leveduras|celulas leveduriformes"]
+].map(mk);
+// Gasometria com bloco "arterial" ou "venosa": os valores vão para um grupo próprio ("Gaso art: pH 7,32, ...")
+const GASO_NAMES = [
+  ["pH","ph"], ["pCO2","pco2|p co2|pressao parcial de co2"], ["pO2","po2|p o2|pressao parcial de o2"],
+  ["HCO3","hco3-?|bicarbonato(?: padrao| real)?"], ["BE","be|excesso de bases?|base excess"],
+  ["SatO2","sat ?o2|so2|saturacao(?: de o2| de oxigenio)?"], ["Lac","lactato(?: arterial| venoso)?|acido latico|acido lactico"],
+  ["Na","sodio|na"], ["K","potassio|k"], ["Cl","cloreto|cloro|cl"], ["CaI","calcio ionico|calcio ionizado|ca ionico|cai"],
+  ["Gli","glicose|glicemia"], ["Hb","hemoglobina|hb"]
+];
+const EXGA = GASO_NAMES.map(([ab, src]) => mk([ab, "gasoA", src]));
+const EXGV = GASO_NAMES.map(([ab, src]) => mk([ab, "gasoV", src]));
+const ALL = [...EX, ...EXU, ...EXG, ...EXGA, ...EXGV];
+const GASO_A_HDR = /^\s*gaso(?:metria)?\s*(?:arterial|art\b)/;
+const GASO_V_HDR = /^\s*gaso(?:metria)?\s*(?:venosa|ven\b)/;
+// Culturas: o bloco inteiro vira um item ("Urocultura: Escherichia coli >100.000 UFC/mL; R: ...; S: ...")
+const CULT_HDR = /^\s*(hemocultura|urocultura|cultura(?:\s+(?:de|para|e|aerobia|anaerobia|quantitativa|qualitativa)\b[a-z ,()\/-]*)?)\s*(?:[-–:(]|$)/;
+const URINE_HDR = /^\s*(?:urina tipo (?:i|1)|urina rotina|eas|elementos anormais|sumario de urina|urinalise|exame (?:qualitativo )?de urina|parcial de urina|urina 1)\b/;
+const GRAM_HDR = /^\s*bacterioscop/;
+
+function norm(s){
+  let o = "";
+  for (let i = 0; i < s.length; i++){
+    const d = s[i].normalize("NFD")[0].toLowerCase();
+    o += d.length === 1 ? d : s[i];
+  }
+  return o;
+}
+function numbersIn(str){
+  const blank = m => " ".repeat(m.length);
+  const cleaned = str.replace(/x\s*10\s*(?:\^|\*\*)?\s*\d+/gi, blank).replace(/10\s*[³⁶⁹]/g, blank);
+  const re = /(?<![A-Za-zµ0-9.,])(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*/g;
+  const out = []; let m;
+  while ((m = re.exec(cleaned))){
+    out.push({v:m[0].replace(/\s/g,""), pct:/^\s*%/.test(cleaned.slice(re.lastIndex))});
+  }
+  return out;
+}
+function pick(nums, ex, diffMode){
+  if (!nums.length) return null;
+  if (ex.diff){
+    if (nums.length >= 2 && !nums.some(x => x.pct)) return (diffMode === "abs" ? nums[1] : nums[0]).v;   // colunas "(%)  Mil/mm3"
+    if (diffMode === "abs"){ const n = nums.find(x => !x.pct); return (n || nums[0]).v; }
+    const n = nums.find(x => x.pct); return (n || nums[0]).v;
+  }
+  return nums[0].v;
+}
+// Datas de coleta do laudo: "Coleta: 13/10/2026", "Coleta (02/10/2026", ou "Coleta:" numa linha e a data na seguinte.
+// Se houver coletas em dias diferentes, vale a mais recente (e o app avisa).
+function coletas(text){
+  const lines = text.split(/\r?\n/), out = [];
+  let prev = "";
+  for (const line of lines){
+    const re = /(\d{2})\/(\d{2})(?:\/(\d{2,4}))?/g; let m;
+    while ((m = re.exec(line))){
+      const before = norm(line.slice(Math.max(0, m.index - 40), m.index));
+      const atStart = !line.slice(0, m.index).trim();
+      if (/nasc|emiss|liber|impress|entrada|cadastro|assinatura/.test(before)) continue;
+      if (/colet|colhid/.test(before) || (atStart && /colet\w*\s*(?:em)?\s*:?\s*$/.test(prev))){
+        let y = m[3] ? +m[3] : null; if (y !== null && y < 100) y += 2000;
+        out.push({d:m[1], m:m[2], y});
+      }
+    }
+    if (line.trim()) prev = norm(line).trim();
+  }
+  return out;
+}
+function lastColeta(text){
+  const cs = coletas(text); if (!cs.length) return null;
+  const yr = cs.find(c => c.y)?.y || new Date().getFullYear();
+  const key = c => (c.y || yr) * 10000 + +c.m * 100 + +c.d;
+  return cs.reduce((a, c) => key(c) > key(a) ? c : a);
+}
+// Data da coleta com ano (AAAA-MM-DD), para ordenar o histórico
+function findDateFull(text){
+  const c = lastColeta(text);
+  if (c && c.y) return c.y + "-" + c.m + "-" + c.d;
+  const re = /(\d{2})\/(\d{2})\/(\d{4})/g; let m, first = null;
+  while ((m = re.exec(text))){
+    const ls = text.lastIndexOf("\n", m.index) + 1;
+    const before = norm(text.slice(Math.max(ls, m.index - 40), m.index));
+    if (/nasc|emiss|liber|impress|assinatura|a partir|alterad|publicac/.test(before)) continue;
+    if (!first) first = m[3] + "-" + m[2] + "-" + m[1];
+  }
+  return first;
+}
+function detectFormat(text){
+  const n = norm(text);
+  if (/cientificalab|cientifica lab|exames assinados eletronicamente/.test(n) && /data assinatura/.test(n)) return "Científica Lab";
+  if (/autenticidade\s*:/.test(n) && /liberado em\s*\(/.test(n)) return "Matrix (Lab. de Saúde Pública)";
+  if (/\bafip\b/.test(n) || (/liberado por/.test(n) && /\bo\.s\s*:/.test(n) && /valores encontrados|resultado\s/.test(n))) return "AFIP";
+  return "Genérico";
+}
+function findDate(text){
+  const c = lastColeta(text);
+  if (c) return c.d + "/" + c.m;
+  const re = /(\d{2})\/(\d{2})(?:\/(\d{2,4}))?/g; let m, first = null;
+  while ((m = re.exec(text))){
+    const ls = text.lastIndexOf("\n", m.index) + 1;
+    const before = norm(text.slice(Math.max(ls, m.index - 40), m.index));
+    if (/nasc|emiss|liber|impress/.test(before)) continue;
+    const d = m[1] + "/" + m[2];
+    if (/colet|colhid/.test(before)) return d;
+    if (!first) first = d;
+  }
+  return first;
+}
+function matchExam(n, list){
+  let best = null, len = 0;
+  for (const ex of list || EX){
+    const m = ex.re.exec(n);
+    if (m && m[0].length > len){ best = ex; len = m[0].length; }
+  }
+  return best ? {ex:best, len} : null;
+}
+// Linhas de cabeçalho/rodapé que aparecem entre o nome do exame e o valor
+const LABEL = /^\s*(?:resultados?|valor(?:es)? de referencia|referencia|material|metodo|metodologia|unidade|nota|obs|amostra|data|liberado|assinad|dra?\.?\s|biomedic|crbm|crf|crm|sedimento)/;
+const QUAL = [
+  [/^nao reagente/,"NR"],[/^reagente/,"R"],
+  [/^nao detectad[oa]s?|^indetectave(?:l|is)/,"ND"],[/^detectad[oa]s?/,"Det"],
+  [/^negativ[oa]s?/,"Neg"],[/^positiv[oa]s?/,"Pos"],
+  [/^ausentes?(?:\s*\(s\))?/,"Aus"],[/^presentes?(?:\s*\(s\))?/,"Pres"],
+  [/^indeterminad[oa]|^inconclusiv[oa]/,"Indet"],
+  [/^tracos/,"Traços"],[/^raros?/,"Raros"],[/^raras/,"Raras"],[/^alguns|^algumas/,"Alguns"],
+  [/^frequentes/,"Freq"],[/^numeros[oa]s/,"Numerosos"],[/^(\+{1,4})(?![\d])/,null]
+];
+const REF_START = /^(?:inferior|superior|ate |menor|maior|abaixo|acima|entre|desejavel|otimo|limitrofe|normal|adultos?|homens?|mulheres?|criancas?|valor de referencia|de \d|com jejum|sem jejum|risco|meta)/;
+// Tira o que sobra do nome do exame: "HBA1C - HEMOGLOBINA GLICADA (HbA1c)" → ""
+function stripName(raw, ex){
+  const lead = /^(?:[\s.:=…_]|[\-–](?=\s))+/;  // traço só sai se não for sinal de negativo (BE -2,1)
+  let t = raw;
+  for (let k = 0; k < 4; k++){
+    const before = t;
+    t = t.replace(lead, "").replace(/^\((?:[^()]|\([^()]*\))*\)/, "");
+    const m = ex.re.exec(norm(t));
+    if (m && m[0].trim()) t = t.slice(m[0].length);
+    if (t === before) break;
+  }
+  return t.replace(lead, "");
+}
+function titleCase(s){ return s.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase()); }
+// Trechos de referência que o Chrome mistura na mesma linha do resultado:
+// "Com jejum <190 (mg/dL) 242 Sem jejum <190", "Método: Jaffé 0,86 mg/dL", "4,2 De 3,5 a 5,5 mEq/L"
+const NUM = "\\d+(?:[.,]\\d+)*";
+const AGE = "(?:dias?|mes(?:es)?|anos?|semanas?)";
+const REF_FRAGS = [
+  /\d{1,2}\/\d{1,2}\/\d{2,4}(?:\s*(?:[-–]|as|às)?\s*\d{1,2}:\d{2}(?::\d{2})?)?/g,   // datas, com ou sem hora ("13/10/2026 - 02:55:22")
+  /\b\d{1,2}:\d{2}:\d{2}\b/g,                                                       // horas soltas
+  /ml\/min\/1[.,]73\s*m[²2]?/g,                                                     // unidade da TFG
+  new RegExp("(?:a partir de|acima de|abaixo de|apos)?\\s*"+NUM+"\\s*"+AGE+"?\\s*(?:a|ate)\\s*"+NUM+"\\s*"+AGE+"\\b", "g"), // "1 ano a 10 anos", "0 a 31dias"
+  new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|abaixo d[eo]s?|apos|maiores de|menores de)\\s*"+NUM+"\\s*"+AGE+"?", "g"),
+  new RegExp(NUM+"\\s*"+AGE+"\\b", "g"),                                             // "19 anos"
+  new RegExp("(?:com|sem)(?: ou sem)? jejum\\s*:?\\s*(?:[<>≤≥]=?\\s*)?(?:"+NUM+"\\s*(?:\\([^)]*\\))?)?", "g"),
+  new RegExp("(?:igual ou )?(?:inferior|superior|acima|abaixo|menor|maior|ate)(?: ou igual)?\\s+(?:(?:a|de|que)\\s+)?"+NUM, "g"),
+  new RegExp("(?:de\\s+)?"+NUM+"\\s*(?:a|ate|-|–)\\s*"+NUM+"(?![.,]?\\d)", "g"),
+  /metodo(?:logia)?\s*:[^\d<>≤≥]*/g,
+  new RegExp("(?<!\\d\\s?):\\s*(?:[<>≤≥]=?\\s*)?"+NUM, "g")                                       // "Normal: ≥ 90", "0 a 4 anos: 213" → referência
+];
+function blankRefs(t){
+  let n = norm(t);
+  for (const re of REF_FRAGS) n = n.replace(re, m => " ".repeat(m.length));
+  let o = "";
+  for (let i = 0; i < t.length; i++) o += n[i] === " " && norm(t[i]) !== " " ? " " : t[i];
+  return o;
+}
+// Lê o valor de um trecho. strict = linha solta abaixo do nome (precisa parecer um resultado)
+function readValue(raw, ex, diffMode, strict){
+  let t = stripName(raw, ex);
+  let n = norm(t).replace(/^resultados?\s*[:\-]?\s*/, "");
+  t = t.slice(t.length - n.length);
+  if (/^(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*\s*(?:a|-|–|ate)\s*\d/.test(n)) return null; // linha que começa com faixa é referência
+  // número seguido de ":" ";" ")" é citação ou tabela ("40: 78-89)", "2011; 34"), não resultado
+  if (strict && /^(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*\s*[:;)(]/.test(n)) return null;
+  t = blankRefs(t);
+  if (strict && /^\s*(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*\s*[)(]/.test(norm(t))) return null;   // "...CKD-EPI 2021)" depois de apagar o método
+  // tira rótulos ("Homens:", "Feminino:") e unidades soltas ("U/L", "ng/mL") que sobraram antes do valor
+  const startsQual = QUAL.some(([re]) => re.test(norm(t).trimStart()));   // "NÃO REAGENTE   Não Reagente: ..." não é rótulo
+  for (let k = 0; k < 6 && !startsQual; k++){
+    const m = norm(t).match(/^\s*(?:[a-z][a-z ()*]*:|[a-zµ%]*\/[a-z0-9.,²³µ/]*|%|index|ui|ng|pg|mg)(?=\s|$)/);
+    if (!m || !m[0].trim()) break;
+    t = " ".repeat(m[0].length) + t.slice(m[0].length);
+  }
+  t = t.trimStart();
+  n = norm(t);
+  if (!n.trim()) return null;
+  if (REF_START.test(n)) return null;
+  for (const [re, ab] of QUAL){
+    const m = re.exec(n);
+    // em linha solta, palavra qualitativa seguida de texto corrido não é resultado ("Alguns autores sugerem...");
+    // seguida de coluna de referência ("Não Reagente: Indice < 1.0") é
+    if (m && strict && !/[:<>≤≥]/.test(n.slice(m[0].length)) && (n.slice(m[0].length).match(/[a-z]{3,}/g) || []).length > 2) return null;
+    if (m){
+      if (/^\s*:/.test(n.slice(m[0].length)) && !/\d\s*[:/]\s*\d/.test(n)) return null; // "Não reagente: inferior a 1,6" é referência
+      const tit = t.match(/\b1\s*[:/]\s*\d+/);
+      const out = ab || m[1];
+      return tit ? out + " " + tit[0].replace(/\s/g, "") : out;
+    }
+  }
+  const tit = t.match(/^\s*1\s*[:/]\s*\d+/);
+  if (tit) return tit[0].replace(/\s/g, "");
+  if (ex.text){
+    if (/\d/.test(n.slice(0, 3))) return null;
+    const caps = t.match(/^[A-ZÀ-Ú][A-ZÀ-Ú ]*[A-ZÀ-Ú](?=\s+[A-ZÀ-Ú][a-zà-ú]|\s{2,}|$)/);
+    const txt = (caps ? caps[0] : t.split(/\s{2,}/)[0]).trim();
+    return txt && txt.length < 30 ? titleCase(txt) : null;
+  }
+  if (!/^(?:[<>≤≥]\s?)?-?\d/.test(n)) return null;
+  return pick(numbersIn(t), ex, diffMode);
+}
+// Fim de um bloco de exame no laudo: descarta nomes que ficaram sem valor
+const BLOCK_END = /^\s*(?:material|data (?:da )?assinatura|liberado|assinad|exames assinados|laudo assinado)/;   // "Material" é fraco (ver parse)
+const RESULT_INLINE = /^\s*resultados?\s*[:\-]?\s*(?:[<>≤≥]?\s?-?\d|nao|reag|neg|pos|det|indet|aus|pres)/;
+// Lê um bloco de cultura: crescimento negativo, microrganismo, contagem de colônias e antibiograma (S/I/R)
+const GENERA = "escherichia|klebsiella|proteus|enterobacter|citrobacter|serratia|morganella|providencia|pseudomonas|acinetobacter|stenotrophomonas|burkholderia|staphylococcus|streptococcus|enterococcus|corynebacterium|listeria|haemophilus|moraxella|neisseria|salmonella|shigella|candida|cryptococcus|aspergillus|clostridioides|clostridium|bacteroides|mycobacterium|micrococcus|bacillus|aeromonas|raoultella|hafnia";
+function parseCulture(c){
+  const L = c.lines.map(l => l.replace(/\.{3,}/g, " "));
+  const N = L.map(norm);
+  const tn = norm(c.title);
+  let ab = /hemocultura/.test(tn) ? "Hemocultura" : /urocultura|cultura (?:de|para) urina|urina/.test(tn) ? "Urocultura" : null;
+  if (!ab){
+    const mat = N.map((n, k) => /^\s*(?:material|amostra|sitio|origem)\s*:\s*(.+)/.test(n) ? L[k].replace(/^[^:]*:\s*/, "").trim() : null).find(Boolean);
+    const what = c.title.replace(/^\s*cultura\s*/i, "").replace(/\s*[-–]\s*amostra.*$/i, "").replace(/[-–:(]+\s*$/, "").trim();
+    ab = "Cultura" + (what ? " " + what.toLowerCase() : mat ? " (" + mat.toLowerCase() + ")" : "");
+  }
+  const am = tn.match(/amostra\s*(\d+)/); if (am) ab += " " + am[1];   // "Hemocultura 1", "Hemocultura 2"
+  const all = N.join("\n");
+  const negative = /nao houve crescimento|ausencia de crescimento|sem crescimento|nao (?:foi observado|houve) crescimento|cultura negativa|negativ[oa]\b|esteril/.test(all);
+  const ongoing = /em andamento|em processamento|resultado parcial|aguardando|incubacao/.test(all);
+  // microrganismo: campo rotulado ou nome científico de gênero conhecido
+  let org = null;
+  for (let k = 0; k < N.length && !org; k++){
+    const m = N[k].match(/^\s*(?:microrganismo|micro-organismo|microorganismo|organismo isolado|germe isolado|isolado|identificacao|agente)(?:\s*\d+)?\s*:\s*(.+)/);
+    if (m && !/nao houve|ausencia|sem crescimento|negativ/.test(m[1])) org = L[k].replace(/^[^:]*:\s*/, "").trim();
+  }
+  if (!org){
+    const re = new RegExp("\\b(?:" + GENERA + ")\\s+(?:[a-z]{3,}|spp?\\.?)", "i");
+    for (let k = 0; k < L.length && !org; k++){ const m = L[k].match(re); if (m && !/^\s*(?:nota|obs|metodo)/.test(N[k])) org = m[0]; }
+  }
+  if (org) org = org.replace(/\s{2,}.*$/, "").replace(/[.;,]\s*$/, "").trim();
+  const cnt = all.match(/(>|≥|acima de|superior a|maior que)?\s*(\d{1,3}(?:[.,]?\d{3})+|\d+\s*x\s*10\^?\s*\d)\s*(ufc|col)/);
+  const count = cnt ? ((cnt[1] ? ">" : "") + cnt[2].replace(/\s/g, "") + " UFC/mL") : null;
+  // antibiograma: "Ampicilina   R", "Ciprofloxacino  <=0,25  S", "Gentamicina ..... Sensível"
+  const S = [], R = [], I = [];
+  for (let k = 0; k < L.length; k++){
+    const m = L[k].match(/^\s*([A-Za-zÀ-ú][A-Za-zÀ-ú0-9 \/+\-().]{2,45}?)\s+(?:[<>=≤≥]{0,2}\s*[\d.,\/]+\s+)?(S|R|I|SDD|SENS[IÍ]VEL|RESISTENTE|INTERMEDI[AÁ]RIO)\s*$/i);
+    if (!m || /^(?:resultado|material|metodo|amostra|contagem|microrganismo|data)\b/i.test(m[1])) continue;
+    const name = m[1].trim().replace(/\s+/g, " "), r = m[2][0].toUpperCase();
+    (r === "S" ? S : r === "R" ? R : I).push(name);
+  }
+  // colunas separadas: lista de antibióticos e, depois, lista de S/R do mesmo tamanho
+  if (!S.length && !R.length && !I.length){
+    const ai = N.findIndex(n => /^\s*antibiograma/.test(n));
+    if (ai >= 0){
+      const names = [], marks = [];
+      for (let k = ai + 1; k < L.length; k++){
+        const t = L[k].trim(); if (!t) continue;
+        if (/^(S|R|I|SDD|SENS[IÍ]VEL|RESISTENTE|INTERMEDI[AÁ]RIO)$/i.test(t)) marks.push(t[0].toUpperCase());
+        else if (!marks.length && /^[A-Za-zÀ-ú][A-Za-zÀ-ú0-9 \/+\-().]{2,45}$/.test(t) && !/:/.test(t)) names.push(t.replace(/\s+/g, " "));
+        else if (marks.length) break;
+      }
+      if (names.length && names.length === marks.length) names.forEach((nm, k) => (marks[k] === "S" ? S : marks[k] === "R" ? R : I).push(nm));
+    }
+  }
+  const src = L.filter(l => l.trim()).slice(0, 4).join(" | ").replace(/\s+/g, " ");
+  if (org){
+    let v = org + (count ? " " + count : "");
+    if (R.length) v += "; R: " + R.join(", ");
+    if (I.length) v += "; I: " + I.join(", ");
+    if (S.length) v += "; S: " + S.join(", ");
+    return {ab, v, flag:"alto", src};
+  }
+  if (negative) return {ab, v:"Neg", flag:"normal", src};
+  if (ongoing) return {ab, v:"em andamento", flag:null, src};
+  return null;
+}
+function parse(text, diffMode){
+  const lines = text.split(/\r?\n/);
+  const found = new Map();
+  let pending = [];   // exames cujo nome apareceu sem valor, na ordem em que apareceram
+  let list = EX;      // muda para urina/gram dentro desses blocos
+  const nameAt = new Map();   // linha onde apareceu o nome de cada exame pendente
+  const bounds = new Set();   // linhas que abrem ou fecham um bloco de exame
+  const store = (ex, v, src, vi) => {
+    if (found.has(ex.key)){ pending = pending.filter(p => p !== ex); return; }
+    const it = {ab:ex.ab, key:ex.key, cat:ex.cat, ex, v, src:src.trim().replace(/\s+/g, " "),
+      ni: nameAt.has(ex) ? nameAt.get(ex) : vi, vi, order:ALL.indexOf(ex)};
+    if (ex.diff){   // diferencial: guarda % e absoluto, porque a referência pode ser de um ou de outro
+      const h = matchExam(norm(src), [ex]);
+      const nums = numbersIn(blankRefs(h ? src.slice(h.len) : src));
+      const pc = nums.find(x => x.pct), ab = nums.find(x => !x.pct);
+      if (nums.length >= 2 && !pc){ it.vPct = nums[0].v; it.vAbs = nums[1].v; }
+      else if (pc && ab){ it.vPct = pc.v; it.vAbs = ab.v; }
+    }
+    found.set(ex.key, it);
+    pending = pending.filter(p => p !== ex);
+  };
+  // Título de exame no laudo ("ÁCIDO FÓLICO") seguido de "Resultado"/"Valor de Referência":
+  // se o bloco termina sem nenhum valor lido, o exame vai para a lista de não reconhecidos
+  const missed = [];
+  let block = null;
+  const closeBlock = () => { if (block && found.size === block.size) missed.push(block.title); block = null; };
+  const nextLines = i => { const o = []; for (let j = i + 1; j < lines.length && o.length < 2; j++) if (lines[j].trim()) o.push(norm(lines[j])); return o; };
+  let cult = null, nCult = 0;
+  let coag = null;   // "TP" ou "TTPA": o "Tempo 11,7 segundos" da AFIP depende do título do bloco
+  // Laudo com gráficos de evolução (AFIP): números soltos podem ser eixo ou valor antigo.
+  // Nesse caso, número solto só vale quando uma coluna inteira casa com a lista de nomes.
+  const BARE = /^\s*(?:[<>]\s*)?-?\d+(?:[.,]\d+)*\s*$/;
+  const COLV = /^\s*(?:[<>]\s*)?-?\d+(?:[.,]\d+)*(?:\s+(?:10\^\d\/)?[a-zA-Zµ%][a-zA-Zµ%\/0-9³]*)?\s*$/;   // número com unidade opcional ("8,4 g/dL", "3,46 10^6/mm3")
+  const chartDoc = (() => {
+    let run = [];
+    for (const l of lines){
+      if (BARE.test(l) && !/[.,]\d{3}\b/.test(l)){ run.push(parseFloat(l.replace(",", "."))); if (run.length >= 4){ const d = run.slice(-4); const st = d[0] - d[1]; if (st > 0 && d.every((x, k) => !k || Math.abs((d[k-1] - x) - st) < 1e-9)) return true; } }
+      else if (l.trim()) run = [];
+    }
+    return false;
+  })();
+  let seq = [], seqLast = -1;   // nomes na ordem em que aparecem (com repetições), para alinhar colunas
+  const gap = (a, b) => { let c = 0; for (let k = a + 1; k < b; k++) if (lines[k].trim()) c++; return c; };
+  const prevLine = k => { for (let j = k - 1; j >= 0; j--) if (lines[j].trim()) return norm(lines[j]); return ""; };
+  let absWait = [];     // sequência que já recebeu a coluna de %, esperando a coluna de absolutos
+  const unresolved = new Set();
+  const exTP = EX.find(e => e.ab === "TP"), exTTPA = EX.find(e => e.ab === "TTPA"), exRTTPA = EX.find(e => e.ab === "R TTPA");
+  const closeCult = () => {
+    if (!cult) return;
+    const r = parseCulture(cult);
+    if (r){
+      const key = "cult:" + r.ab + (nCult++ ? "#" + nCult : "");
+      found.set(key, {ab:r.ab, key, cat:"cult", ex:null, v:r.v, flag0:r.flag, src:r.src, ni:cult.start, vi:cult.start, order:ALL.length + nCult});
+    } else missed.push(cult.title);
+    cult = null;
+  };
+  for (let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const n = norm(line);
+    const title = line.trim();
+    // dentro de uma cultura: junta as linhas até o fim do bloco
+    if (cult){
+      const strongEnd = /^\s*(?:data (?:da )?assinatura|exames assinados|laudo assinado|assinad)/.test(n);
+      const newBlock = CULT_HDR.test(n) || URINE_HDR.test(n) || GRAM_HDR.test(n) || GASO_A_HDR.test(n) || GASO_V_HDR.test(n)
+        || (title.length <= 70 && /[A-ZÀ-Ú]{4}/.test(title) && !/[a-zà-ú]/.test(title) && matchExam(n, EX) && !/\b(?:S|R|I)\s*$/.test(title));
+      if (strongEnd || newBlock){ closeCult(); bounds.add(i); if (strongEnd) continue; }
+      else { cult.lines.push(line); continue; }
+    }
+    if (CULT_HDR.test(n) && title.length <= 80){
+      closeBlock(); pending = []; list = EX; bounds.add(i);
+      cult = {title, start:i, lines:[]}; continue;
+    }
+    if (GASO_A_HDR.test(n)){ closeBlock(); list = EXGA; pending = []; bounds.add(i); continue; }
+    if (GASO_V_HDR.test(n)){ closeBlock(); list = EXGV; pending = []; bounds.add(i); continue; }
+    if (title.length <= 70 && /[A-ZÀ-Ú]{3}/.test(title) && !/[a-zà-ú]/.test(title) && !/\d{3}/.test(title) && !/:/.test(title)
+        && !/^(?:DRA?\.|PREFEITURA|SECRETARIA|SEDIMENTO|BIOM|EXAMES ASSINADOS|LAUDO|N[ÃA]O REAGENTE|REAGENTE|NEGATIVO|POSITIVO|AUSENTE|PRESENTE|INDETERMINADO|AMOSTRA|EQUIPE|MULTIPROFISSIONAL|PMSP|RESULTADOS? ANTERIORES)\b/.test(title)
+        && nextLines(i).some(x => /^resultados?\b|valor(?:es)? de referencia/.test(x))){
+      closeBlock(); block = {title, size: found.size}; bounds.add(i);
+    }
+    if (URINE_HDR.test(n)){ list = EXU; pending = []; bounds.add(i); continue; }
+    if (GRAM_HDR.test(n)){ list = EXG; pending = []; bounds.add(i); continue; }
+    if (!/\d/.test(n)){
+      if (/tempo e atividade (?:de )?protrombina|^\s*tempo de protrombina|^\s*protrombina\b/.test(n)) coag = "TP";
+      else if (/ttpa|tromboplastina parcial/.test(n)) coag = "TTPA";
+    }
+    let hit = matchExam(n, list);
+    if (!hit && coag && list === EX){ const m = n.match(/^\s*tempo\b/); if (m) hit = {ex: coag === "TP" ? exTP : exTTPA, len: m[0].length}; }
+    if (hit && hit.ex.ab === "R TP" && coag === "TTPA") hit = {ex: exRTTPA, len: hit.len};
+    if (hit){
+      const ex = hit.ex;
+      if (found.has(ex.key)) continue;          // repetição na coluna de referência
+      const rest = line.slice(hit.len);
+      let v = rest.trim() ? readValue(rest, ex, diffMode, false) : null;
+      if (v === null && ex.ab === "TFG"){
+        const m = norm(stripName(rest, ex)).match(/^\s*(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
+        if (m) v = ">" + m[1];
+      }
+      if (v !== null) store(ex, v, line, i);
+      else if (!/\d|reagente|positivo|negativo|detectad|ausente|presente/.test(norm(stripName(rest, ex)))){
+        if (!pending.includes(ex)){ pending.push(ex); nameAt.set(ex, i); }
+        if (seqLast >= 0 && gap(seqLast, i) > 2) seq = []; seq.push(ex); seqLast = i;
+      }
+      // se a linha tinha número mas era faixa de referência ("Albumina: 3,4 a 4,8"), não entra na fila
+      continue;
+    }
+    if (BLOCK_END.test(n)){
+      const weak = /^\s*material/.test(n);
+      if (weak){
+        // na AFIP o "Material:" vem antes do "Resultado"; só descarta pendentes que já esperaram demais
+        pending = pending.filter(p => i - (nameAt.get(p) ?? i) <= 4);
+        if (!(list === EXGA || list === EXGV)) list = EX;   // "Material: sangue arterial" no meio da gasometria não fecha o bloco
+        closeBlock();
+      } else { closeBlock(); for (const p of pending) if (chartDoc) unresolved.add(p); pending = []; list = EX; coag = null; seq = []; absWait = []; bounds.add(i); }
+      continue;
+    }
+    // sem gráfico, a coluna só é alinhada no leucograma (onde a coluna de % tem um valor a menos que a de absolutos)
+    const colRun = (() => { if (chartDoc || pending.filter(p => p.diff).length < 3 || !COLV.test(line) || /^\s*\d{1,2}\/\d{2}/.test(line)) return 0;
+      let c = 0; for (let j = i; j < lines.length; j++){ if (!lines[j].trim()) continue; if (COLV.test(lines[j]) && !/^\s*\d{1,2}\/\d{2}/.test(lines[j])) c++; else break; } return c; })();
+    if ((chartDoc || colRun >= 2) && COLV.test(line) && !/^\s*\d{1,2}\/\d{2}/.test(line)){
+      // junta a coluna de números soltos e só aceita se o tamanho bater com os nomes pendentes
+      const run = []; let j = i;
+      for (; j < lines.length; j++){ if (!lines[j].trim()) continue; if (COLV.test(lines[j]) && !/^\s*\d{1,2}\/\d{2}/.test(lines[j])) run.push(j); else break; }
+      const near = seq.length && gap(seqLast, run[0]) <= 4;
+      const afterResult = /^\s*(?:resultado|valor(?:es)? encontrados?)\s*:?\s*$/.test(prevLine(run[0]));
+      if (run.length === 1 && afterResult && pending.length){
+        const p = pending.slice().sort((a, b) => (nameAt.get(b) ?? 0) - (nameAt.get(a) ?? 0))[0];
+        if (gap(nameAt.get(p) ?? 0, run[0]) <= 8){ const v = readValue(lines[run[0]], p, diffMode, true); if (v !== null) store(p, v, lines[run[0]], run[0]); }
+        i = j - 1; continue;
+      }
+      if (!near && !absWait.length){ for (const p of pending) unresolved.add(p); i = j - 1; continue; }
+      const S = near ? seq : pending.slice();
+      const used = new Set();
+      const put = (p, j2, asPct) => {              // só a primeira ocorrência de cada exame recebe valor
+        if (used.has(p.key)) return; used.add(p.key);
+        const raw = readValue(lines[j2], p, "pct", true) ?? lines[j2].trim();
+        if (!found.has(p.key)) store(p, raw, lines[j2], j2);
+        if (asPct && p.diff) found.get(p.key).vPct = raw;
+      };
+      const diffS = S.filter(p => p.diff);
+      if (S.length && run.length === S.length){
+        S.forEach((p, k) => put(p, run[k], true));
+        if (diffS.length) absWait = S.slice();
+        pending = pending.filter(p => !found.has(p.key)); seq = [];
+      } else if (diffS.length >= 2 && run.length === diffS.length){
+        diffS.forEach((p, k) => put(p, run[k], true));
+        absWait = S.slice(); seq = []; pending = pending.filter(p => !p.diff);
+      } else if (absWait.length && run.length === absWait.length){
+        const used2 = new Set();
+        absWait.forEach((p, k) => {
+          if (used2.has(p.key)) return; used2.add(p.key);
+          const raw = lines[run[k]].trim();
+          if (found.has(p.key)){ const it = found.get(p.key); if (p.diff){ it.vAbs = raw; if (diffMode === "abs") it.v = raw; } }
+          else store(p, raw, raw, run[k]);
+        });
+        absWait = []; pending = pending.filter(p => !found.has(p.key));
+      } else for (const p of pending) unresolved.add(p);
+      seq = [];
+      i = j - 1; continue;
+    }
+    if (!pending.length) continue;
+    const tfgP = pending.find(p => p.ab === "TFG");
+    if (tfgP){
+      const m = n.match(/^\s*(?:resultados?\s*:?\s*)?(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
+      if (m && (/^\s*resultado/.test(n) || pending[0] === tfgP)){ store(tfgP, ">" + m[1], line, i); continue; }
+    }
+    if (chartDoc && !RESULT_INLINE.test(n) && gap(nameAt.get(pending[0]) ?? i, i) > 3) continue;   // longe do nome, num laudo com gráficos: não arrisca
+    // "Método: Jaffé sem desproteinização 0,86 mg/dL": a parte do método some e o valor fica
+    const nb = norm(blankRefs(line)).trimStart();
+    if (!nb || (LABEL.test(nb) && !RESULT_INLINE.test(nb))) continue;
+    const v = readValue(line, pending[0], diffMode, true);
+    if (v !== null) store(pending[0], v, line, i);
+  }
+  closeCult(); closeBlock();
+  for (const p of [...unresolved, ...(chartDoc ? pending : [])]) if (!found.has(p.key)) missed.push(p.ab + " (valor não localizado com segurança)");
+  const out = [...found.values()].sort((a,b) => a.order - b.order);
+  for (const it of out) it.suspect = implausible(it);
+  out.missed = [...new Set(missed)];
+  out.lines = lines; out.bounds = bounds;
+  return out;
+}
+// Faixas do fisiologicamente possível (bem largas). Fora delas, quase certamente o app leu o número errado.
+const PLAUS = {
+  Hb:[2,25], Ht:[6,75], Hm:[0.5,9], VCM:[40,150], HCM:[10,50], CHCM:[20,45], RDW:[8,40],
+  Leuco:[0.1,600000], Bast:[0,100000], Seg:[0,600000], Neut:[0,600000], Linf:[0,600000], Mono:[0,100000], Eos:[0,100000], Baso:[0,100000],
+  Plaq:[1,3000000], Retic:[0,40], HbA1c:[3,20],
+  Ur:[2,500], Cr:[0.1,25], TFG:[1,200], Na:[90,200], K:[1,10], Cl:[60,150], Mg:[0.3,10], Ca:[3,20], CaI:[0.3,3], P:[0.5,20], AU:[0.5,25],
+  TGO:[3,30000], TGP:[3,30000], GGT:[3,5000], FA:[10,5000], BT:[0.05,60], BD:[0,50], BI:[0,50],
+  PTN:[2,15], Alb:[0.5,7], Glob:[0.5,10], "A/G":[0.1,5], Amil:[5,10000], Lip:[3,30000], LDH:[50,20000], CPK:[5,200000],
+  PCR:[0,700], CT:[50,1500], HDL:[5,200], LDL:[5,1000], TG:[10,20000],
+  TSH:[0.001,500], T4L:[0.05,10], Ferritina:[1,100000], Fe:[5,600], B12:[50,5000], Folato:[0.3,50], VitD:[2,300],
+  INR:[0.5,15], TP:[5,200], TTPA:[10,250], Gli:[10,2000], GME:[50,700],
+  pCO2:[5,150], pO2:[10,700], HCO3:[2,60], BE:[-40,40], SatO2:[10,100], Lac:[0.1,30], PSA:[0,20000]
+};
+const PLAUS_U = { pH:[4,9.5], Dens:[1000,1060] };
+function toNum(v){
+  let t = String(v).replace(/[<>≤≥\s]/g, "");
+  if (!/^-?\d+(?:[.,]\d+)*$/.test(t)) return null;
+  if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+  else if (/^-?\d{1,3}(?:\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+  return parseFloat(t);
+}
+function implausible(it){
+  const r = (it.cat === "urina" ? PLAUS_U : CATS[it.cat].seg ? {} : (it.ab === "pH" ? {pH:[6.5,8]} : PLAUS))[it.ab];
+  if (!r) return false;
+  const x = toNum(it.v);
+  return x !== null && (x < r[0] || x > r[1]);
+}
+// ================= Referências do laboratório =================
+// Cada exame recebe: flag "alto" | "baixo" | "normal" | null (referência não interpretada) e o trecho de referência usado.
+const NOREF = new Set(["GME","LDL","Cor","Aspecto"]);   // GME é calculada; LDL depende do risco cardiovascular
+function patientFrom(text){
+  const p = {age:null, sex:null, name:null};
+  // nome: "RA: 123 - NOME SOBRENOME 68 anos" (Científica), "Nome: NOME   SOBRENOME   Cadastro" (Matrix), "Paciente: NOME"
+  const nm = text.match(/\bRA\s*:\s*\d+\s*-\s*([A-ZÀ-Ú][A-ZÀ-Ú' .]+?)(?=\s+\d{1,3}\s*anos|\s+Sexo\b|\s*\r?\n|\s*$)/)
+    || text.match(/\bNome\s*:\s*([A-Za-zÀ-ú][A-Za-zÀ-ú' .\t]+?)(?=\s+\d|\s+(?:Cadastro|CNS|Sexo|Data|Prontu[aá]rio|Idade|RG|CPF)\b|\s*\r?\n|\s*$)/)
+    || text.match(/\bPaciente\s*:\s*([A-Za-zÀ-ú][A-Za-zÀ-ú' .]+?)(?=\s{2,}|\s+(?:Sexo|Idade|Data|Nasc|RG|CPF|Prontu)|\s*\r?\n|\s*$)/);
+  if (nm) p.name = nm[1].replace(/\s+/g, " ").trim().toUpperCase();
+  if (!p.name){ const m = text.match(/(?:^|\n)\s*([A-ZÀ-Ú][A-ZÀ-Ú' ]{5,60}?)\s*\r?\n\s*Nome\s*:\s*\r?\n/); if (m) p.name = m[1].replace(/\s+/g, " ").trim(); }
+  const bd = text.match(/(?:data\s*(?:de\s*)?)?nasc(?:imento|\.)?\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+  p.birth = bd ? bd[3] + "-" + bd[2] + "-" + bd[1] : null;
+  // identidade para o histórico: primeiro nome + nascimento (o nome às vezes vem cortado na cópia)
+  p.key = p.name ? (p.birth ? p.name.split(" ")[0] + "|" + p.birth : p.name) : null;
+  // IDADE, em ordem de confiança:
+  // 1) data de nascimento + data da coleta (não depende do formato do cabeçalho)
+  // 2) idade escrita no cabeçalho ("Idade: 67 anos", "RA: ... 68 anos 11 meses", "24/10/2007|18a")
+  // Nunca de texto de referência ("válida para pacientes acima de 18 anos", "a partir de 18 anos").
+  const REFLIKE = /acima d|abaixo d|a partir d|maiores d|menores d|apos |ate |entre |faixa|referenc|valid|equac|individuo|recomend|idade \(anos\)/;
+  if (p.birth){
+    const c = lastColeta(text), dc = c && c.y ? new Date(c.y, +c.m - 1, +c.d) : null;
+    const ref = dc || (findDateFull(text) ? new Date(findDateFull(text) + "T12:00:00") : null);
+    const b = new Date(p.birth + "T12:00:00");
+    if (ref && ref > b){
+      let y = ref.getFullYear() - b.getFullYear();
+      let mo = ref.getMonth() - b.getMonth() - (ref.getDate() < b.getDate() ? 1 : 0);
+      if (mo < 0){ y--; mo += 12; }
+      if (y >= 0 && y < 130) p.age = y + mo / 12;
+    }
+  }
+  let prevNonEmpty = "";
+  for (const line of text.split(/\r?\n/)){
+    const n = norm(line);
+    if (p.age === null && !REFLIKE.test(n)){
+      let m = null;
+      if (/\bidade\s*:?/.test(n)) m = n.match(/\bidade\s*:?\s*(\d{1,3})\s*(?:anos?|a)\b(?:\s+(\d{1,2})\s*m)?/);
+      if (!m && /^\s*ra\s*:/.test(n)) m = n.match(/(\d{1,3})\s*anos?(?:\s+(\d{1,2})\s*mes(?:es)?)?/);
+      if (!m && /nasc/.test(n)) m = n.match(/\|\s*(\d{1,3})\s*a\b()/) || n.match(/nasc[^|]*?\d{4}\D{1,6}(\d{1,3})\s*anos?\b()/);
+      if (!m && /^\s*\d{1,3}\s*anos?\b/.test(n) && /^\s*(?:idade\s*:?|ra\s*:.*)\s*$/i.test(norm(prevNonEmpty))) m = n.match(/(\d{1,3})\s*anos?(?:\s+(\d{1,2})\s*mes(?:es)?)?/);
+      if (m) p.age = +m[1] + (m[2] ? +m[2] / 12 : 0);
+    }
+    if (line.trim()) prevNonEmpty = line;
+    if (p.sex === null){
+      const m = n.match(/sexo\s*:?\s*(masculino|feminino|m|f)\b/);
+      if (m) p.sex = m[1][0] === "m" ? "M" : "F";
+    }
+  }
+  return p;
+}
+const UNIT_TOK = /^\s*((?:[a-zµμ%][a-z0-9µμ%²³.,]*)?(?:\/[a-z0-9µμ.,²³]+)+|%|index|ui|u)(?=\s|$|[),;])/i;
+const normUnit = u => u ? u.toLowerCase().replace(/\s/g,"").replace(/[µμ]/g,"u").replace(/^iu/,"ui").replace("mmol/l","meq/l") : null;
+const toYears = (x, u) => !u ? x : /^dia/.test(u) ? x / 365 : /^mes/.test(u) ? x / 12 : /^semana/.test(u) ? x / 52 : x;
+const nb = s => parseFloat(s.replace(/\.(?=\d{3}\b)/g, "").replace(",", "."));
+const AGEU = "(dias?|mes(?:es)?|anos?|semanas?)";
+// Lê o "quem" de um trecho: idade, sexo, gestante, jejum
+function qualifiers(n){
+  const q = {};
+  let m;
+  if ((m = new RegExp("(\\d+(?:[.,]\\d+)?)\\s*"+AGEU+"?\\s*(?:a|ate|-)\\s*(\\d+(?:[.,]\\d+)?)\\s*"+AGEU).exec(n))){
+    const u1 = m[2] || m[4];
+    q.age = [toYears(nb(m[1]), u1), toYears(nb(m[3]) + 1, m[4])]; q.ageTxt = m[0];
+  } else if ((m = new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|maiores de|apos)\\s*(\\d+)\\s*"+AGEU).exec(n))){
+    q.age = [toYears(+m[1], m[2]), Infinity]; q.ageTxt = m[0];
+  } else if ((m = new RegExp("(?:abaixo d[eo]s?|menores de|ate)\\s*(\\d+)\\s*"+AGEU).exec(n))){
+    q.age = [0, toYears(+m[1], m[2])]; q.ageTxt = m[0];
+  }
+  const isM = /\b(?:homens?|homem|masculino|sexo masculino)\b/.test(n), isF = /\b(?:mulheres?|feminino|sexo feminino)\b/.test(n);
+  if (isM && !isF) q.sex = "M"; else if (isF && !isM) q.sex = "F";   // "Masculino/Feminino" (cabeçalho de tabela) não define sexo
+  if (!q.age && /\b(?:rn|recem[- ]nascidos?|neonatos?)\b/.test(n)){ q.age = [0, 28/365]; q.ageTxt = (n.match(/\b(?:rn|recem[- ]nascidos?|neonatos?)\b/) || [""])[0]; }
+  else if (!q.age && /\badult[oa]s?\b/.test(n) && !/crianca/.test(n)){ q.age = [18, Infinity]; q.ageTxt = (n.match(/\badult[oa]s?\b/) || [""])[0]; }
+  if (/gestante|gravidez|trimestre|lactante/.test(n)) q.preg = true;
+  if (/com ou sem jejum/.test(n)) q.fast = "any";
+  else if (/com jejum|em jejum/.test(n)) q.fast = "com";
+  else if (/sem jejum/.test(n)) q.fast = "sem";
+  return q;
+}
+const NUMR = "(-?\\d+(?:[.,]\\d+)*)";
+// Condição de referência: intervalo [lo, hi] com limites abertos ou fechados, ou palavras qualitativas
+function condition(n){
+  let m;
+  const c = (lo, hi, loIn, hiIn, at) => ({lo, hi, loIn, hiIn, at});
+  if ((m = new RegExp("(?:igual ou superior a|maior ou igual a|≥|>=)\\s*"+NUMR).exec(n))) return c(nb(m[1]), Infinity, true, false, m.index + m[0].length);
+  if ((m = new RegExp("(?:igual ou inferior a|menor ou igual a|≤|<=)\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, true, m.index + m[0].length);
+  if ((m = new RegExp("(?:^|\\s)(?:de\\s+)?"+NUMR+"\\s*(?:a|ate|-|–)\\s*"+NUMR+"(?![\\d])").exec(n))) return c(nb(m[1]), nb(m[2]), true, true, m.index + m[0].length);
+  if ((m = new RegExp("(?:superior a|maior que|maior de|acima de|>)\\s*"+NUMR).exec(n))) return c(nb(m[1]), Infinity, false, false, m.index + m[0].length);
+  if ((m = new RegExp("(?:inferior a|menor que|menor de|abaixo de|<)\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, false, m.index + m[0].length);
+  if ((m = new RegExp("(?:^|\\s)ate\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, true, m.index + m[0].length);
+  if ((m = /\b(ausentes?|negativ[oa]s?|nao reagente|nao detectad[oa]|indetectavel|raras|raros|tracos)\b/.exec(n))) return {qual:true, at:m.index + m[0].length};
+  return null;
+}
+const NORMAL_LBL = /normal|nao reagente|negativ|desejavel|otimo|adequad|suficiente|saudavel|ausente/;
+const ABN_LBL = /reagente|positiv|risco|diabet|deficien|insuficien|elevad|\balt[oa]\b|limitrofe|indetermin|inconclusiv|reducao|diminuicao|falencia|sugestiv|doenca|toxic|hipo|hiper|pre ?diab|intoleran|muito/;
+function category(label){
+  const l = label.replace(/e grupos? de risco\*?/g, "").replace(/populac\w+/g, "");
+  if (NORMAL_LBL.test(l)) return "normal";
+  if (ABN_LBL.test(l)) return "abn";
+  return null;
+}
+const PROSE = /^\s*(?:nota|notas|referencia|referencias|bibliografia|obs|para |conforme|esta |\*|¹|\(|valores |exame executado|um pequeno|alguns autores|https?|atualizacao|material|metodo|data |dra?\.|biomedic|crbm|resultado|valor de referencia\s*[-–:]?\s*(?:$|[-–]))/;
+// Divide uma linha em trechos "rótulo: condição" e devolve as cláusulas de referência
+function clausesOf(line, li){
+  const n = norm(line);
+  if (!n.trim() || PROSE.test(n) || n.trim().length > 120) return [];
+  if ((n.match(/\)/g) || []).length > (n.match(/\(/g) || []).length) return [];
+  if (/\b(?:sugere|devem?|podem?|estiverem|apresentam|recomenda|considerad|interpreta|provavelmente|observad)/.test(n)) return [];   // texto corrido
+  if (/terapeutic|anticoagul|sangramento|\bmeta\b|\balvo\b/.test(n)) return [];
+  if (/\d+-\d+-\d+|\b\d{4,}\s*-\s*\d{4,}\b|\b\d{6,}\b/.test(n)) return [];   // números de pedido/OS ("7128-67856-27"), não faixas   // faixa terapêutica do INR, metas: não são referência
+  // citações: "2011; 34(suppl 1)", "J Urol. 1996 Apr;155(4):1336-9" (um ano sem unidade depois)
+  if (/\b(?:19|20)\d{2}\b(?!\s*(?:[a-zµ%]*\/|%|[a-zµ]+\/))|et al|doi|\d\s*\(\d+\)\s*:/.test(n)) return [];
+  // pontos de corte: início de rótulo ("Homens:", "Normal :") ou de faixa etária ("0 a 3 meses")
+  const cuts = new Set([0]); let m;
+  // faixas etárias inteiras ("0 a 3 meses", "1 mês a 18 anos", "A partir de 19 anos") não podem ser cortadas no meio
+  const ages = [];
+  const ag = new RegExp("(^|\\s)((?:(?:populacao )?(?:saudavel )?(?:a partir d[eo]s?|acima d[eo]s?|abaixo d[eo]s?|maiores de|menores de)\\s*)?\\d+(?:[.,]\\d+)?\\s*(?:"+AGEU+"\\s*)?(?:(?:a|ate|-)\\s*\\d+(?:[.,]\\d+)?\\s*)?"+AGEU+")\\b", "g");
+  while ((m = ag.exec(n))){ const a = m.index + m[1].length; ages.push([a, a + m[2].length]); cuts.add(a); }
+  const lbl = /(^|\s)([a-z*][a-z ()*\/.\-]*?)\s*:/g;
+  while ((m = lbl.exec(n))){ const a = m.index + m[1].length; if (!ages.some(([x, y]) => a > x && a < y)) cuts.add(a); }
+  const pos = [...cuts].sort((a,b) => a - b);
+  const out = []; let carry = "";
+  for (let k = 0; k < pos.length; k++){
+    const seg = n.slice(pos[k], pos[k+1] ?? n.length);
+    const q = qualifiers(seg);
+    let body = seg; if (q.ageTxt) body = body.replace(q.ageTxt, " ");
+    const lab = (body.match(/^([^:]*?):/) || [,""])[1];
+    const cond = condition(lab ? body.slice(body.indexOf(":") + 1) : body);
+    if (!cond){ carry += seg + " "; continue; }       // rótulo sem condição: junta ao próximo trecho
+    const full = carry + seg; carry = "";
+    const fq = qualifiers(full);
+    const label = (full.replace(fq.ageTxt || "\u0000", " ").match(/^([^:]*?):/) || [,""])[1];
+    const after = (lab ? body.slice(body.indexOf(":") + 1) : body).slice(cond.at);
+    const um = after.match(UNIT_TOK);
+    out.push({...cond, li, q:fq, cat:category(label), label, unit: um ? normUnit(um[1]) : null,
+              txt: line.slice(pos[k] - (full.length - seg.length) < 0 ? 0 : pos[k], pos[k+1] ?? line.length).trim(), ctxOnly:false});
+  }
+  if (carry.trim() && !out.length){
+    const q = qualifiers(carry);
+    if (q.age || q.sex || q.preg) out.push({ctxOnly:true, q, li});   // "Feminino:", "Acima de 19 anos:", "Gestantes*"
+  }
+  return out;
+}
+// Intervalo do valor do paciente: "5,1" → [5,1 , 5,1]; ">20.000" → (20000, ∞)
+function valueInterval(v){
+  const t = String(v).trim(); const x = toNum(t);
+  if (x === null) return null;
+  if (/^[>≥]/.test(t)) return {lo:x, hi:Infinity, loIn:/^≥/.test(t), hiIn:false};
+  if (/^[<≤]/.test(t)) return {lo:-Infinity, hi:x, loIn:false, hiIn:/^≤/.test(t)};
+  return {lo:x, hi:x, loIn:true, hiIn:true};
+}
+const inside = (v, c) => (v.lo > c.lo || (v.lo === c.lo && (c.loIn || !v.loIn))) && (v.hi < c.hi || (v.hi === c.hi && (c.hiIn || !v.hiIn)));
+const disjoint = (v, c) => v.hi < c.lo || (v.hi === c.lo && !(v.hiIn && c.loIn)) || v.lo > c.hi || (v.lo === c.hi && !(v.loIn && c.hiIn));
+const dirOf = (v, c) => (c.hi !== Infinity && (v.lo > c.hi || (v.lo === c.hi && !c.hiIn))) ? "alto" : "baixo";
+const QUAL_NORMAL = /^(Aus|Neg|NR|ND|Raras|Raros|Traços)$/;
+const QUAL_ABN = /^(Pres|Pos|R|Det|\+{1,4})(?:\s|$)/;
+function judge(it, cls){
+  if (!cls.length) return {flag:null};
+  const show = cs => [...new Set(cs.map(c => c.txt))].join("; ");
+  if (!/\d/.test(it.v)){                                  // resultado qualitativo
+    if (QUAL_NORMAL.test(it.v)) return {flag:"normal", ref:show(cls)};
+    if (QUAL_ABN.test(it.v)) return {flag:"alto", ref:show(cls)};
+    return {flag:null, ref:show(cls)};
+  }
+  const num = cls.filter(c => !c.qual);
+  // diferencial: compara na mesma escala da referência (absoluto, a não ser que a referência seja em %)
+  let vv = it.v;
+  if (it.ex && it.ex.diff && it.vAbs !== undefined){ vv = num.length && num.every(c => c.unit === "%") ? it.vPct : it.vAbs; }
+  const v = valueInterval(vv);
+  if (!v || !num.length) return {flag:null, ref:show(cls)};
+  const normal = num.filter(c => c.cat !== "abn"), abn = num.filter(c => c.cat === "abn");
+  const hitAbn = abn.find(c => inside(v, c));
+  if (hitAbn){
+    const base = normal[0];
+    return {flag: base ? dirOf(v, base) : (hitAbn.hi === Infinity ? "alto" : hitAbn.lo === -Infinity ? "baixo" : "alto"), ref:show([hitAbn, ...normal])};
+  }
+  if (!normal.length) return {flag:null, ref:show(cls)};
+  if (normal.every(c => inside(v, c))) return {flag:"normal", ref:show(normal)};
+  if (normal.every(c => disjoint(v, c))) return {flag:dirOf(v, normal[0]), ref:show(normal)};
+  return {flag:null, ref:show(normal)};                   // ex.: TG entre o limite com jejum e o sem jejum
+}
+function applyRefs(items, patient){
+  const lines = items.lines; if (!lines) return;
+  const L = lines.slice();
+  const blank = (li, a, b) => { L[li] = L[li].slice(0, a) + " ".repeat(Math.max(0, b - a)) + L[li].slice(b); };
+  // 1) apaga do texto o nome e o valor de cada exame, guardando a unidade do resultado
+  for (const it of items){
+    if (!it.ex) continue;                       // culturas já vêm julgadas
+    const line = L[it.vi];
+    // valor na mesma linha do nome ("Hemoglobina Glicada - HbA1c: 5,0 %"): procura logo depois do nome
+    const h = matchExam(norm(line), [it.ex]);
+    const sameLine = !!h;
+    const start = h ? line.length - stripName(line.slice(h.len), it.ex).length : 0;
+    const b = sameLine ? norm(line) : norm(blankRefs(line));
+    let m = null;
+    if (it.ab === "TFG" && /^>/.test(it.v) && !/[>≥]\s*\d/.test(norm(line))){
+      const mm = /(?:superior a|maior que|maior ou igual a|acima de)\s*\d+(?:[.,]\d+)?/.exec(norm(line));
+      if (mm){
+        let end = mm.index + mm[0].length;
+        const um = L[it.vi].slice(end).match(UNIT_TOK); it.unit = um ? normUnit(um[1]) : null; if (um) end += um[0].length;
+        blank(it.vi, 0, end);
+        if (it.ni !== it.vi){ const h2 = matchExam(norm(L[it.ni]), [it.ex]); if (h2) blank(it.ni, 0, h2.len); }
+        continue;
+      }
+    }
+    if (/\d/.test(it.v)){
+      const num = it.v.replace(/^[<>≤≥]/, "").replace(/[.]/g, "\\.").split(" ")[0];
+      const cmp = /^[<>≤≥]/.test(it.v) ? "[" + it.v[0] + "]\\s*" : "";
+      const re = new RegExp("(?<![\\d.,])" + cmp + num + "(?![\\d])", "g"); re.lastIndex = start;
+      m = re.exec(b);
+    } else {
+      const re = /(nao reagente|reagente|nao detectad\w*|indetectave\w*|detectad\w*|negativ\w*|positiv\w*|ausentes?(?:\s*\(s\))?|presentes?(?:\s*\(s\))?|indeterminad\w*|inconclusiv\w*|tracos|rar[oa]s?|alguns|algumas|frequentes|numeros\w*|\+{1,4}|[a-z]+(?: [a-z]+)?)/g;
+      re.lastIndex = start; m = re.exec(b);
+    }
+    if (!m) continue;
+    let end = m.index + m[0].length;
+    const um = L[it.vi].slice(end).match(UNIT_TOK);
+    it.unit = um ? normUnit(um[1]) : null;
+    if (um) end += um[0].length;
+    blank(it.vi, sameLine ? 0 : m.index, end);
+    if (it.ni !== it.vi){ const h2 = matchExam(norm(L[it.ni]), [it.ex]); if (h2) blank(it.ni, 0, h2.len); }
+  }
+  // 2) agrupa os exames por bloco do laudo
+  const bounds = [...items.bounds].sort((a,b) => a - b);
+  const segOf = i => { let s = 0; for (const b of bounds){ if (b <= i) s = b; else break; } return s; };
+  const groups = new Map();
+  for (const it of items){
+    const s = segOf(Math.min(it.ni, it.vi));
+    if (!groups.has(s)) groups.set(s, []);
+    groups.get(s).push(it);
+  }
+  for (const [s, its] of groups){
+    const e = bounds.find(b => b > Math.max(...its.map(x => Math.max(x.ni, x.vi)))) ?? L.length;
+    // 3) cláusulas do bloco, com o contexto de idade/sexo das linhas soltas ("Masculino:", "Acima de 19 anos:")
+    let ctx = {}, ageTable = false;
+    const all = [];
+    const nameLines = new Set();
+    // cabeçalho de lista de referência ("Estimativa da Taxa de Filtração Glomerular, eTFG:") não conta como nome de exame
+    for (let li = s; li < e; li++) if (matchExam(norm(lines[li]), ALL) && !(/:\s*$/.test(lines[li]) && !/\d/.test(lines[li]) && !its.some(x => x.ni === li || x.vi === li))) nameLines.add(li);
+    for (let li = s; li < e; li++){
+      let ln = L[li].replace(/\((dias|meses|anos)\)/gi, "$1");
+      if (/idade\s*\(anos\)/i.test(lines[li])) ageTable = true;
+      else if (ageTable) ln = ln.replace(/^(\s*\d+)\s*a\s*(\d+)(?!\s*(?:dias|mes|meses|anos?)\b)/i, "$1 a $2 anos").replace(/^(\s*\d+\s*dias\s*a\s*\d+)(?!\s*(?:dias|mes|meses|anos?)\b)/i, "$1 anos");
+      for (const c of clausesOf(ln, li)){
+        if (c.ctxOnly){
+          if (c.q.sex) ctx = {sex:c.q.sex};
+          if (c.q.age) ctx = {...ctx, age:c.q.age};
+          if (c.q.preg) ctx = {...ctx, preg:true};
+          continue;
+        }
+        c.q = {...ctx, ...c.q};
+        all.push(c);
+      }
+    }
+    const refable = its.filter(x => x.cat !== "cult" && !NOREF.has(x.ab) && (!CATS[x.cat].seg || ["urina","gasoA","gasoV"].includes(x.cat)));
+    const own = new Map(refable.map(x => [x, []]));
+    const free = [];
+    for (const c of all){
+      const byLabel = refable.filter(x => c.label && x.ex.re.test(c.label.trim()));
+      const byLine = refable.filter(x => x.vi === c.li || x.ni === c.li);
+      const byUnit = c.unit ? refable.filter(x => x.unit && x.unit === c.unit) : [];
+      const tgt = byLabel.length === 1 ? byLabel[0] : byLine.length === 1 ? byLine[0] : refable.length === 1 ? refable[0] : byUnit.length === 1 ? byUnit[0] : null;
+      if (tgt) own.get(tgt).push(c);
+      else if (!nameLines.has(c.li)) free.push(c);   // linha de outro exame ("Linfócitos totais 17,3 1,63 1,0 - 4,0") não empresta referência
+    }
+    // 4) colunas separadas (nomes, depois valores, depois referências): casa na ordem
+    // só para valores em linhas seguidas (formato de colunas); cada sequência pega as referências que vêm depois dela
+    const lacking = refable.filter(x => !own.get(x).length).sort((a,b) => a.vi - b.vi);
+    const filled = []; for (let li = s; li < e; li++) if (lines[li].trim()) filled.push(li);
+    const runs = [];
+    // formato de colunas: o nome não está na linha do valor
+    for (const x of lacking.filter(x => !matchExam(norm(lines[x.vi]), [x.ex]) && x.ni !== x.vi)){
+      const r = runs[runs.length - 1];
+      if (r && filled.indexOf(x.vi) === filled.indexOf(r[r.length - 1].vi) + 1) r.push(x); else runs.push([x]);
+    }
+    runs.forEach((run, k) => {
+      if (run.length < 2) return;
+      const from = run[run.length - 1].vi, to = runs[k + 1] ? runs[k + 1][0].vi : e;
+      const fl = [...new Set(free.filter(c => c.li > from && c.li < to).map(c => c.li))].sort((a,b) => a - b);
+      run.forEach((x, j) => { if (fl[j] !== undefined) own.get(x).push(...free.filter(c => c.li === fl[j])); });
+    });
+    // 4b) nome / valor / referência em linhas próprias: a única linha de referência entre o valor e o próximo exame é dele
+    const marks = [...new Set([...refable.flatMap(x => [x.ni, x.vi]), ...nameLines])].sort((a,b) => a - b);
+    for (const x of refable.filter(x => !own.get(x).length)){
+      const nm = marks.find(m => m > x.vi), next = nm ?? e;
+      const ls = [...new Set(free.filter(c => c.li > x.vi && c.li < next).map(c => c.li))];
+      // várias linhas só quando a região é fechada: até o próximo exame, ou até um fim de bloco real e curto
+      const closed = nm !== undefined || (bounds.includes(e) && e - x.vi <= 15);
+      if (ls.length === 1 || (ls.length > 1 && closed)) own.get(x).push(...free.filter(c => ls.includes(c.li)));
+    }
+    // 5) só vale a cláusula que se aplica ao paciente e tem a mesma unidade
+    for (const it of refable){
+      const cls = own.get(it).filter(c => {
+        if (c.q.preg) return false;
+        if (c.q.sex && patient.sex && c.q.sex !== patient.sex) return false;
+        if (c.q.sex && !patient.sex) return false;
+        if (c.q.age){ if (patient.age === null) return false; if (patient.age < c.q.age[0] || patient.age >= c.q.age[1]) return false; }
+        if (c.unit && it.unit && c.unit !== it.unit && !(c.unit.includes(it.unit) || it.unit.includes(c.unit))) return false;
+        return true;
+      });
+      const r = judge(it, cls);
+      it.flag = r.flag; it.ref = r.ref || null;
+    }
+  }
+}
+// ================= Referências padrão (opcional) =================
+// Só entram quando o laudo não trouxe referência para aquele exame. Adulto; [mín, máx] ou {M:[..], F:[..]}.
+// Exames cuja unidade varia muito entre laboratórios (leucócitos, plaquetas, PCR, lactato, TTPA) ficam de fora.
+const DEFAULT_REF = {
+  Hb:{M:[13,17.5],F:[12,15.5]}, Ht:{M:[39,50],F:[35,45]}, Hm:{M:[4.3,5.7],F:[3.9,5.0]}, VCM:[80,100], HCM:[27,33], CHCM:[32,36], RDW:[11.5,14.5],
+  Ur:[15,50], Cr:{M:[0.7,1.3],F:[0.5,1.1]}, Na:[135,145], K:[3.5,5.1], Cl:[98,107], Mg:[1.6,2.6], Ca:[8.5,10.5], CaI:[1.12,1.32], P:[2.5,4.5],
+  AU:{M:[3.5,7.2],F:[2.6,6.0]}, TGO:{M:[0,40],F:[0,35]}, TGP:{M:[0,41],F:[0,33]}, GGT:{M:[0,60],F:[0,40]}, FA:[40,130],
+  BT:[0,1.2], BD:[0,0.3], Alb:[3.5,5.2], PTN:[6.4,8.3], CT:[0,190,"<"], HDL:{M:[40,Infinity],F:[50,Infinity]}, TG:[0,150,"<"],
+  TSH:[0.4,4.5], T4L:[0.8,1.8], Ferritina:{M:[30,400],F:[15,150]}, Fe:[60,170], B12:[200,900], VitD:[20,100],
+  HbA1c:[0,5.7,"<"], Gli:[70,99], INR:[0.8,1.2], PSA:[0,4]
+};
+const DEFAULT_GASO = { pH:[7.35,7.45], pCO2:[35,45], pO2:[80,100], HCO3:[22,26], BE:[-2,2], SatO2:[95,100] };
+const DEFAULT_GASO_V = { pH:[7.31,7.41], pCO2:[41,51] };
+const QUAL_DEFAULT_CATS = new Set(["urina","sorol"]);
+function applyDefaults(items, patient){
+  for (const it of items){
+    if (it.flag || it.ref || it.cat === "cult" || NOREF.has(it.ab)) continue;
+    if (!/\d/.test(it.v)){                                   // qualitativo: negativo/ausente é normal; reagente/presente é alterado
+      if (!QUAL_DEFAULT_CATS.has(it.cat)) continue;
+      if (QUAL_NORMAL.test(it.v)) it.flag = "normal"; else if (QUAL_ABN.test(it.v)) it.flag = "alto"; else continue;
+      it.ref = "padrão do app: esperado negativo/ausente"; it.refDefault = true; continue;
+    }
+    let r = it.cat === "gasoA" ? DEFAULT_GASO[it.ab] : it.cat === "gasoV" ? DEFAULT_GASO_V[it.ab]
+          : (it.cat === "urina" || CATS[it.cat].seg) ? null : DEFAULT_REF[it.ab];
+    if (!r) continue;
+    if (!Array.isArray(r)){ if (!patient.sex) continue; r = r[patient.sex]; }
+    const v = valueInterval(it.v); if (!v) continue;
+    const c = {lo:r[0], hi:r[1], loIn:true, hiIn:r[2] !== "<"};
+    it.flag = inside(v, c) ? "normal" : disjoint(v, c) ? dirOf(v, c) : null;
+    if (!it.flag) continue;
+    const show = n => String(n).replace(".", ",");
+    it.ref = "padrão do app (adulto): " + (c.lo <= 0 && c.hi !== Infinity ? (c.hiIn ? "até " : "abaixo de ") + show(c.hi)
+              : c.hi === Infinity ? "acima de " + show(c.lo) : show(c.lo) + " a " + show(c.hi));
+    it.refDefault = true;
+  }
+}
+// ================= Testes embutidos (laudos simulados, sem dados reais) =================
+const EMBED_TESTS = [{"name": "Científica (simulado): idade, sexo e faixas etárias", "text": "RA: 12345678 - TESTE SIMULADO DA SILVA 68 anos 2 meses 1 dias Sexo : M\nData de Nascimento :01/07/1958\nColeta :24/09/2026 07:30:00\nTGO (AST) - TRANSAMINASE OXALACÉTICA\nResultado Valor de Referência:\n Homens: 15 a 40 U/L 30 Mulheres: 13 a 35 U/L U/L\nMaterial: SORO Método: AUTOMAÇÃO - UV OPTIMIZADO PELA IFCC\nData Assinatura: 25/09/2026 19:47:45\nPOTÁSSIO\nResultado Valor de Referência:\n 0 a 3 meses: 3,5 a 5,8 mmol/L\n4 meses a 5 meses: 3,2 a 5,7 mmol/L\nA partir de 1 ano: 3,5 a 5,1 mmol/L\n5,1 mmol/L\nMaterial: SORO Método: AUTOMAÇÃO - ELETRODO ÍON SELETIVO - INDIRETO\nData Assinatura: 25/09/2026 19:34:52\nCOLESTEROL TOTAL\nResultado Valor de Referência:\n0 a 2 anos: \nNão existem valores de referência estabelecidos para essa faixa etária. \nAcima de 19 anos: \nCom ou sem jejum: Inferior a 190mg/dL\n245 mg/dL\nMaterial: SORO Método: Colorimétrico Enzimático\nData Assinatura: 26/09/2026 06:12:37\nHORMONIO TIREOESTIMULANTE\nResultado Valor de Referência:\n0 a 31 dias: Inferior a 9,00 µUI/mL\n20 anos a 60 anos: 0,40 a 4,30 µUI/mL\n60 anos a 80 anos: 0,40 a 5,80 µUI/mL\nGestantes*\nPrimeiro Trimestre: 0,10 a 3,60 µUI/mL\n1,58 µUI/mL\nMaterial: SORO Método: QUIMIOLUMINESCÊNCIA\nData Assinatura: 25/09/2026 19:49:17\nURINA TIPO I\n Valor de Referência:\nDensidade 1011 De 1003 a 1040\nNitrito NEGATIVO Negativo\nLeucócitos 15.700 /mL Inferior a 25.000/mL\nBactérias > 20.000 <20.000\nMaterial: URINA - AMOSTRA ISOLADA\nData Assinatura: 25/09/2026 10:52:46\n", "defaults": false, "expect": ["K=5,1", "TGO=30", "CT=245↑", "TSH=1,58", "urina:Dens=1011", "urina:Nitrito=Neg", "urina:Leuco=15.700", "urina:Bact=>20.000↑"]}, {"name": "Matrix (simulado): sorologias", "text": "PMSP - LABORATÓRIO DE SAÚDE PÚBLICA SANTO AMARO\nPedido:                  Nome: TESTE       SIMULADA DA SILVA                                          Cadastro: 02/10/2026 13:43\nData Nascimento: 24/10/2007|18a                                   Sexo: F\nTOXOPLASMOSE - IgG\n                                                                      Valores de Referência\nResultado: NÃO REAGENTE                                           Não Reagente :     < 1.6 UI/mL\nIndice   : 0.10 UI/mL                                             Indeterminado:     1.6 - 3.0 UI/mL\nMaterial    : Soro                                                Reagente       :   > = 3.0 UI/mL\nAutenticidade: 9A49F25BAFEC22782F2A531D8485C055E8176817502208F66709B0DD32EC37D\nColeta (02/10/2026 13:43) Liberação: TESTE - CRF-SP 0000            Liberado em (02/10/2026 16:51)\n-------------------------------------------------------------------------------\nHEPATITE C\n                                                                      Valores de Referência\nResultado: REAGENTE                                               Não Reagente: Indice < 1.0\nIndice   : 8.1                                                    Reagente      : Indice > ou = 1.0\nMaterial    : Soro\nSOROLOGIA PARA SÍFILIS - TESTE TREPONÊMICO\n                                                                          Valores de Referência\nResultado: NÃO REAGENTE                                                   Não Reagente: Indíce < 1.0\nÍndice   : 0.04                                                           Reagente       : Indice   > ou = 1.0\n", "defaults": false, "expect": ["Toxo IgG=NR", "Anti-HCV=R↑", "Trep=NR"]}, {"name": "Gasometria arterial e venosa", "text": "Paciente: JOAO TESTE   Sexo: M   Idade: 60 anos\nColeta: 01/10/2026 08:00\nGASOMETRIA ARTERIAL\nMaterial: Sangue arterial\npH                    7,32        7,35 a 7,45\npCO2                  48,0 mmHg   35,0 a 45,0 mmHg\npO2                   72 mmHg     80 a 100 mmHg\nHCO3                  24,1 mmol/L 22,0 a 26,0 mmol/L\nBE                    -1,2 mmol/L -2,0 a 2,0 mmol/L\nSaturação de O2       93 %        95 a 100 %\nLactato               1,4 mmol/L  0,5 a 1,6 mmol/L\nData Assinatura: 01/10/2026 10:00:00\nGASOMETRIA VENOSA\npH                    7,36        7,31 a 7,41\npCO2                  45 mmHg     41 a 51 mmHg\nData Assinatura: 01/10/2026 10:00:00\nPOTÁSSIO\nResultado          Valor de Referência:\n4,0 mEq/L          3,5 a 5,1 mEq/L\nMaterial: SORO\nData Assinatura: 01/10/2026 10:00:00\n", "defaults": false, "expect": ["gasoA:pH=7,32↓", "gasoA:pCO2=48,0↑", "gasoA:pO2=72↓", "gasoA:HCO3=24,1", "gasoA:BE=-1,2", "gasoA:SatO2=93↓", "gasoA:Lac=1,4", "gasoV:pH=7,36", "gasoV:pCO2=45", "K=4,0"]}, {"name": "Culturas e antibiograma", "text": "Paciente: ANA TESTE   Sexo: F   Idade: 40 anos\nColeta: 02/10/2026 09:00\nUROCULTURA\nMaterial: Urina jato médio\nResultado: Positiva\nMicrorganismo: Escherichia coli\nContagem de colônias: > 100.000 UFC/mL\nANTIBIOGRAMA\nAmpicilina ........... R\nAmoxicilina + Clavulanato   8   S\nCiprofloxacino    >=4   R\nNitrofurantoína ..... S\nGentamicina   S\nData Assinatura: 04/10/2026 10:00:00\nHEMOCULTURA - AMOSTRA 1\nResultado: Não houve crescimento bacteriano após 5 dias de incubação.\nData Assinatura: 07/10/2026 10:00:00\nHEMOCULTURA - AMOSTRA 2\nResultado: Em andamento\nData Assinatura: 07/10/2026 10:00:00\nCULTURA DE SECREÇÃO\nMaterial: Secreção de ferida operatória\nIsolado: Staphylococcus aureus\nOxacilina   R\nVancomicina   S\nData Assinatura: 07/10/2026 10:00:00\nCREATININA\nResultado          Valor de Referência:\n0,8 mg/dL          0,50 a 1,10 mg/dL\nMaterial: SORO\n", "defaults": false, "expect": ["Cr=0,8", "cult:Urocultura=Escherichia coli >100.000 UFC/mL; R: Ampicilina, Ciprofloxacino; S: Amoxicilina + Clavulanato, Nitrofurantoína, Gentamicina↑", "cult:Hemocultura 1#2=Neg", "cult:Hemocultura 2#3=em andamento?", "cult:Cultura de secreção#4=Staphylococcus aureus; R: Oxacilina; S: Vancomicina↑"]}, {"name": "Exames novos (ferro, marcadores, T3L)", "text": "Paciente: CARLOS TESTE   Sexo: M   Idade: 55 anos\nColeta: 03/10/2026\nTransferrina 250 mg/dL 200 a 360 mg/dL\nÍndice de Saturação da Transferrina 18 % 20 a 50 %\nCapacidade total de ligação do ferro 380 µg/dL 250 a 425 µg/dL\nColesterol VLDL 32 mg/dL\nCEA 2,1 ng/mL Até 5,0 ng/mL\nAlfa-fetoproteína 3,2 ng/mL Inferior a 10 ng/mL\nCA 19-9 45 U/mL Inferior a 37 U/mL\nCA 125 20 U/mL Até 35 U/mL\nCA 15-3 12 U/mL Até 30 U/mL\nT3 Livre 3,1 pg/mL 2,0 a 4,4 pg/mL\nT3 Total 110 ng/dL 80 a 200 ng/dL\nRelação paciente/normal 1,05 0,85 a 1,20\nCálcio 9,1 mg/dL 8,5 a 10,5 mg/dL\n", "defaults": false, "expect": ["Ca=9,1", "VLDL=32?", "T3=110", "T3L=3,1", "Transferrina=250", "IST=18↓", "CTLF=380", "CEA=2,1", "AFP=3,2", "CA 19-9=45↑", "CA 125=20", "CA 15-3=12", "R TP=1,05"]}, {"name": "Laudo sem referência (sem padrão)", "text": "Paciente: MARIA TESTE   Sexo: F   Idade: 50 anos\nColeta: 05/10/2026\nHemoglobina 10,5 g/dL\nCreatinina 1,3 mg/dL\nPotássio 5,6 mEq/L\nTSH 2,0 µUI/mL\nLeucócitos 12.000 /mm³\nAnti-HCV: Reagente\n", "defaults": false, "expect": ["Hb=10,5?", "Leuco=12.000?", "Cr=1,3?", "K=5,6?", "TSH=2,0?", "Anti-HCV=R?"]}, {"name": "Laudo sem referência (com padrão do app)", "text": "Paciente: MARIA TESTE   Sexo: F   Idade: 50 anos\nColeta: 05/10/2026\nHemoglobina 10,5 g/dL\nCreatinina 1,3 mg/dL\nPotássio 5,6 mEq/L\nTSH 2,0 µUI/mL\nLeucócitos 12.000 /mm³\nAnti-HCV: Reagente\n", "defaults": true, "expect": ["Hb=10,5↓", "Leuco=12.000?", "Cr=1,3↑", "K=5,6↑", "TSH=2,0", "Anti-HCV=R↑"]}, {"name": "PDF em colunas (cópia do Chrome)", "text": "RA: 11111111 - PEDRO SIMULADO TESTE 62 anos 3 meses 2 dias Sexo : M\nData de Nascimento :10/07/1964\nColeta :01/10/2026 07:30:00\nGASOMETRIA ARTERIAL\nValor de Referência:\npH 7,32 7,35 a 7,45\npCO2 48,0 mmHg 35,0 a 45,0 mmHg\npO2 72 mmHg 80 a 100 mmHg\nHCO3 24,1 mmol/L 22,0 a 26,0 mmol/L\nBE -1,2 mmol/L -2,0 a 2,0 mmol/L\nSaturação de O2 93 % 95 a 100 %\nLactato 1,4 mmol/L 0,5 a 1,6 mmol/L\nMaterial: SANGUE ARTERIAL\nData Assinatura: 02/10/2026 10:00:00\nGASOMETRIA VENOSA\npH 7,36 7,31 a 7,41\npCO2 45 mmHg 41 a 51 mmHg\nData Assinatura: 02/10/2026 10:00:00\nTRANSFERRINA\nResultado Valor de Referência:\n250 mg/dL 200 a 360 mg/dL\nMaterial: SORO\nData Assinatura: 02/10/2026 10:00:00\nÍNDICE DE SATURAÇÃO DA TRANSFERRINA\nResultado Valor de Referência:\n18 % 20 a 50 %\nMaterial: SORO\nData Assinatura: 02/10/2026 10:00:00\nCAPACIDADE TOTAL DE LIGAÇÃO DO FERRO\nResultado Valor de Referência:\n380 µg/dL 250 a 425 µg/dL\nMaterial: SORO\nData Assinatura: 02/10/2026 10:00:00\nCEA - ANTÍGENO CARCINOEMBRIONÁRIO\nResultado Valor de Referência:\nNão fumantes: Até 5,0 ng/mL\n2,1 ng/mL Fumantes: Até 10,0 ng/mL\nMaterial: SORO\nData Assinatura: 02/10/2026 10:00:00\nCA 19-9\nResultado Valor de Referência:\n45 U/mL Inferior a 37 U/mL\nMaterial: SORO\nData Assinatura: 02/10/2026 10:00:00\nRA: 11111111 - PEDRO SIMULADO TESTE 62 anos 3 meses 2 dias Sexo : M\nData de Nascimento :10/07/1964\nColeta :01/10/2026 07:30:00\nCA 125\nResultado Valor de Referência:\n20 U/mL Até 35 U/mL\nMaterial: SORO\nData Assinatura: 02/10/2026 10:00:00\nT3 LIVRE\nResultado Valor de Referência:\n0 a 30 dias: 2,0 a 7,9 pg/mL\n1 mês a 18 anos: 2,5 a 5,0 pg/mL\nA partir de 19 anos: 2,0 a 4,4 pg/mL\n3,1 pg/mL\nMaterial: SORO\nData Assinatura: 02/10/2026 10:00:00\nUROCULTURA\nMaterial: Urina jato médio\nResultado: Positiva\nMicrorganismo: Escherichia coli\nContagem de colônias: > 100.000 UFC/mL\nANTIBIOGRAMA\nAmpicilina R\nAmoxicilina + Clavulanato S\nCiprofloxacino R\nNitrofurantoína S\nGentamicina S\nData Assinatura: 04/10/2026 10:00:00\nHEMOCULTURA - AMOSTRA 1\nResultado: Não houve crescimento bacteriano após 5 dias de incubação.\nData Assinatura: 07/10/2026 10:00:00", "defaults": false, "expect": ["gasoA:pH=7,32↓", "gasoA:pCO2=48,0↑", "gasoA:pO2=72↓", "gasoA:HCO3=24,1", "gasoA:BE=-1,2", "gasoA:SatO2=93↓", "gasoA:Lac=1,4", "gasoV:pH=7,36", "gasoV:pCO2=45", "Transferrina=250", "IST=18↓", "CTLF=380", "CEA=2,1", "CA 19-9=45↑", "CA 125=20", "T3L=3,1", "cult:Urocultura=Escherichia coli >100.000 UFC/mL; R: Ampicilina, Ciprofloxacino; S: Amoxicilina + Clavulanato, Nitrofurantoína, Gentamicina↑", "cult:Hemocultura 1#2=Neg"]}, {"name": "AFIP (simulado): diferencial em % e absoluto, coagulação, gráficos", "text": "Pedido : 0000000000 O.S : 0000-00000-00 Data Entrada: 13/10/2026 - 00:05:39\nPaciente : PACIENTE SIMULADO AFIP Data Impressão: 13/10/2026 - 20:47:48\nData Nasc.: 01/01/1959 Idade: 67 anos\nSexo: Masculino\nHemograma Completo\nMaterial: Sangue total (EDTA) Coleta: 13/10/2026 - 00:53:22\nMétodo: Citoquímico/Isovolumétrico Liberação: 13/10/2026 - 02:55:22\nEritrograma Valores Encontrados Valores de Referência\nEritrócitos 3,46 10^6/mm3 4,50 - 5,50 10^6/mm3\nHemoglobina 8,4 g/dL 13,0 - 17,0 g/dL\nHematócrito 25,1 % 40,0 - 50,0 %\nVCM 72,5 fL 80,0 - 100,0 fL\nHCM 24,3 pg 27,0 - 32,0 pg\nCHCM 33,5 g/dL 31,5 - 36,0 g/dL\nRDW 16,5 % 11,9 - 15,4 %\nPlaquetas 304 Mil/mm3 150 - 400 Mil/mm3\nLeucograma Valores Encontrados Valores de Referência\n(%) Mil/mm3 (Mil/mm3)\nLeucócitos 9,40 4,5 - 11,0\nNeutrófilos 69,1 6,50 1,8 - 7,70\nBlastos 0,0 0,00 0\nPromielócitos 0,0 0,00 0\nMielócitos 0,0 0,00 0\nMetamielócitos 0,0 0,00 0\nBastonetes 0,0 0,00 0 - 0,7\nSegmentados 69,1 6,50 1,8 - 7,0\nEosinófilos 7,9 0,74 0,0 - 0,45\nBasófilos 0,5 0,05 0,0 - 0,2\nLinfócitos típicos 17,3 1,63 1,0 - 3,8\nLinfócitos atípicos 0,0 0,00 0,0 - 0,20\nLinfócitos totais 17,3 1,63 1,0 - 4,0\nMonócitos 5,2 0,49 0,0 - 0,80\nLiberado por Dra. Fulana Teste - CRBM 0000\n______________________________________________________________________________________________________\n______________________________________________________________________________________________________\nA interpretação dos resultados dos exames laboratoriais deve basear-se no valor preditivo do teste.\nRegistro Laboratório Clínico: CRBM 2020-6376-101. CNES: 0262943. Responsável Técnico: Bruna Borrego Perez - CRBM 26089\nResponsável Técnico: Pamella Oliveira de Araujo CRBM: 27629 CNES 2077671\nASSINATURA DIGITAL\nD6D7A8725608F2C119DEAB02F6B2B480698491824069C877A897D09F73D6C6A3A3B3F7D70605D315\nTempo e atividade Protrombina\nMaterial: Plasma (citrato) Coleta: 13/10/2026 - 00:53:16\nMétodo: Coagulométrico Liberação: 13/10/2026 - 03:06:16\nTempo 11,7 segundos\nAtividade 93,5 %\nValor de referência: 70 ate 130 %\nRNI 1,04\nValor de referência: 1,00 ate 1,20\nRNI (International Normalized Ratio) para pacientes em uso de anticoagulante oral:\nFaixa Terapêutica desejável: 2,5 a 3,0\nRisco de sangramento > 5,0\nLiberado por Dra. Fulana Teste - CRBM 0000\n30/11/25\n14:03:43\n01/12/25\n03:23:41\n02/12/25\n02:23:05\n03/12/25\n02:00:47\n09/10/26\n15:07:19\n12/10/26\n00:46:16\n13/10/26\n00:53:16\n8\n10\n12\n14\n16\n18\n10,2\n10,9\n10,2\n11,8 11,8 11,3 11,7\n30/11/25\n14:03:43\n01/12/25\n03:23:41\n02/12/25\n02:23:05\n03/12/25\n02:00:47\n09/10/26\n15:07:19\n12/10/26\n00:46:16\n13/10/26\n00:53:16\n40\n60\n80\n100\n120\n140\n160\n103,6\n90,0\n103,6\n76,2\n92,2\n99,4 93,5\n30/11/25\n14:03:43\n01/12/25\n03:23:41\n02/12/25\n02:23:05\n03/12/25\n02:00:47\n09/10/26\n15:07:19\n12/10/26\n00:46:16\n13/10/26\n00:53:16\n0,6\n0,8\n1\n1,2\n1,4\n1,6\n0,98\n1,05\n0,98\n1,14\n1,04 1,00 1,04\n______________________________________________________________________________________________________\n______________________________________________________________________________________________________\nA interpretação dos resultados dos exames laboratoriais deve basear-se no valor preditivo do teste.\nRegistro Laboratório Clínico: CRBM 2020-6376-101. CNES: 0262943. Responsável Técnico: Bruna Borrego Perez - CRBM 26089\nResponsável Técnico: Pamella Oliveira de Araujo CRBM: 27629 CNES 2077671\nASSINATURA DIGITAL\nD6D7A8725608F2C119DEAB02F6B2B480698491824069C877A897D09F73D6C6A3A3B3F7D70605D315\nTTPA - Tempo de Tromboplastina Parcial Ativada\nMaterial: Plasma (citrato) Coleta: 13/10/2026 - 00:53:16\nMétodo: Coagulométrico Liberação: 13/10/2026 - 03:48:36\nTempo 22,0 segundos\nRelação paciente/normal 0,90\nValor de referência: 0,85 até 1,20\nObservações gerais: Repetido e confirmado\nLiberado por Dra. Fulana Teste - CRBM 0000\n30/11/25\n14:03:43\n01/12/25\n03:23:41\n02/12/25\n02:23:05\n03/12/25\n02:00:47\n09/10/26\n15:07:19\n12/10/26\n00:46:16\n13/10/26\n00:53:16\n10\n15\n20\n25\n30\n35\n40\n18,1\n20,7 21,8 23,2\n24,8\n22,6 22,0\n30/11/25\n14:03:43\n01/12/25\n03:23:41\n02/12/25\n02:23:05\n03/12/25\n02:00:47\n09/10/26\n15:07:19\n12/10/26\n00:46:16\n13/10/26\n00:53:16\n0,4\n0,6\n0,8\n1\n1,2\n1,4\n1,6\n0,72\n0,82 0,87 0,92\n0,99\n0,90 0,90\n______________________________________________________________________________________________________\n______________________________________________________________________________________________________\nA interpretação dos resultados dos exames laboratoriais deve basear-se no valor preditivo do teste.\nRegistro Laboratório Clínico: CRBM 2020-6376-101. CNES: 0262943. Responsável Técnico: Bruna Borrego Perez - CRBM 26089\nResponsável Técnico: Pamella Oliveira de Araujo CRBM: 27629 CNES 2077671\nASSINATURA DIGITAL\nD6D7A8725608F2C119DEAB02F6B2B480698491824069C877A897D09F73D6C6A3A3B3F7D70605D315\nUreia, sérica\nMaterial: Soro Coleta: 13/10/2026 - 00:53:28\nMétodo: Colorimétrico - QS Liberação: 13/10/2026 - 02:55:22\nResultado 38,2 mg/dL\nValor de referência: Adultos\nMasculino : 19 a 43 mg/dL\nFeminino : 15 a 36 mg/dL\nIdade (anos) Masculino/Feminino\n0 a 15 (dias) 7 a 50 mg/dL\n15 dias a 1 ano 8 a 37 mg/dL\n1 a 10 20 a 49 mg/dL\n11 a 19 (masculino) 17 a 46 mg/dL\n11 a 19 (feminino) 17 a 42 mg/dL\nAtenção para o novo intervalo de referência a partir de 08/09/2022.\nLiberado por Dra. Fulana Teste - CRBM 0000\n08/12/25\n05:21:27\n09/12/25\n06:26:50\n12/12/25\n05:10:09\n13/12/25\n06:39:34\n14/12/25\n06:24:21\n15/12/25\n06:19:11\n09/10/26\n15:06:58\n11/10/26\n04:20:50\n12/10/26\n00:45:00\n13/10/26\n00:53:28\n0\n20\n40\n60\n80\n100\n120\n26,0 28,7\n14,7\n20,5\n27,8 31,8\n90,0\n50,9\n42,0 38,2\n______________________________________________________________________________________________________\n______________________________________________________________________________________________________\nA interpretação dos resultados dos exames laboratoriais deve basear-se no valor preditivo do teste.\nRegistro Laboratório Clínico: CRBM 2020-6376-101. CNES: 0262943. Responsável Técnico: Bruna Borrego Perez - CRBM 26089\nResponsável Técnico: Pamella Oliveira de Araujo CRBM: 27629 CNES 2077671\nASSINATURA DIGITAL\nD6D7A8725608F2C119DEAB02F6B2B480698491824069C877A897D09F73D6C6A3A3B3F7D70605D315\n", "defaults": false, "expect": ["Hb=8,4↓", "Ht=25,1↓", "Hm=3,46↓", "VCM=72,5↓", "HCM=24,3↓", "CHCM=33,5", "RDW=16,5↑", "Leuco=9,40", "Bast=0,0", "Seg=69,1", "Neut=69,1", "Linf=17,3", "Atíp=0,0", "Blastos=0,0?", "Promielócitos=0,0?", "Mielócitos=0,0?", "Metamielócitos=0,0?", "Mono=5,2", "Eos=7,9↑", "Baso=0,5", "Plaq=304", "Ur=38,2", "TP=11,7?", "AP=93,5", "INR=1,04", "R TTPA=0,90", "TTPA=22,0?"]}];
+function runEmbeddedTests(){
+  const fmt = x => x.key + "=" + x.v + (x.flag === "alto" ? "↑" : x.flag === "baixo" ? "↓" : x.flag === "normal" ? "" : "?");
+  const lines = []; let fail = 0;
+  for (const t of EMBED_TESTS){
+    const r = parse(t.text, "pct"), p = patientFrom(t.text);
+    for (const it of r){ it.flag = it.flag0 || null; it.ref = null; }
+    applyRefs(r, p); if (t.defaults) applyDefaults(r, p);
+    const got = r.map(fmt), miss = t.expect.filter(x => !got.includes(x)), extra = got.filter(x => !t.expect.includes(x));
+    const ok = !miss.length && !extra.length && !r.missed.length;
+    if (!ok) fail++;
+    lines.push((ok ? "✓ " : "✗ ") + t.name);
+    for (const x of miss) lines.push("    esperado: " + x);
+    for (const x of extra) lines.push("    obtido:   " + x);
+    if (r.missed.length) lines.push("    não reconhecidos: " + r.missed.join(", "));
+  }
+  return {lines, fail, total: EMBED_TESTS.length};
+}
+// PARSER-END
+// Cópia do app para uso offline: só o código do próprio app (sem scripts que a página publicada receba de fora)
+const PAGE_SRC = (() => {
+  const c = document.documentElement.cloneNode(true);
+  c.removeAttribute("data-theme");
+  c.querySelectorAll("script").forEach(sc => { if (sc.src || !/linhaExames/.test(sc.textContent)) sc.remove(); });
+  return "<!DOCTYPE html>\n" + c.outerHTML;
+})();
+
+const $ = id => document.getElementById(id);
+const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
+let state = {off:[], prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:false, upper:false, defaults:false, hist:true};
+try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch(e){}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} };
+
+$("prefix").value = state.prefix; $("dfmt").value = state.dfmt; $("sep").value = state.sep; $("diff").value = state.diff; $("mark").value = state.mark;
+const OPTS = {prev:"o-prev", compact:"o-compact", group:"o-group", upper:"o-upper", defaults:"o-defaults", hist:"o-hist"};
+for (const [k, id] of Object.entries(OPTS)) $(id).checked = !!state[k];
+
+let items = [];
+let manual = new Map();   // escolhas feitas neste laudo para valores suspeitos
+let patient = {key:null, name:null, dateFull:null};
+// células imaturas e atípicos zerados ficam fora da linha por padrão (dá para marcar)
+const ZERO_OFF = new Set(["Blastos","Promielócitos","Mielócitos","Metamielócitos","Atíp"]);
+const zeroOff = it => ZERO_OFF.has(it.ab) && toNum(it.v) === 0;
+const isOn = it => manual.has(it.key) ? manual.get(it.key) : (!state.off.includes(it.key) && !it.suspect && !zeroOff(it));
+
+function extract(){
+  const text = $("src").value;
+  items = text.trim() ? parse(text, state.diff) : [];
+  manual = new Map();
+  const p = text.trim() ? patientFrom(text) : {age:null, sex:null, name:null, key:null};
+  if (p.age !== null) $("age").value = String(Math.floor(p.age));
+  if (p.sex) $("sex").value = p.sex;
+  $("pname").value = p.name || "";
+  if (!text.trim()){ $("age").value = ""; $("sex").value = ""; }
+  patient = {key:p.key, name:p.name, birth:p.birth, dateFull: text.trim() ? findDateFull(text) : null};
+  items.patientFound = p;
+  const fmt0 = text.trim() ? detectFormat(text) : null, fmt = fmt0 === "Genérico" ? null : fmt0;
+  $("fmt").hidden = !fmt; $("fmt").textContent = fmt ? "Formato reconhecido: " + fmt : "";
+  judgeAll();
+  const d = text.trim() ? findDate(text) : null;
+  $("date").value = d || "";
+  render();
+  scheduleSave();
+}
+// Compara com as referências do laudo usando a idade e o sexo dos campos (que você pode corrigir)
+function judgeAll(){
+  const a = parseFloat(($("age").value || "").replace(",", "."));
+  const pf = items.patientFound || {};
+  const age = isNaN(a) ? null : (pf.age !== null && pf.age !== undefined && Math.floor(pf.age) === a ? pf.age : a);
+  const pt = {age, sex: $("sex").value || null};
+  for (const it of items){ it.flag = it.flag0 || null; it.ref = null; it.refDefault = false; }
+  if (items.length) applyRefs(items, pt);
+  // LDL: a referência do laudo depende do risco cardiovascular; aqui vale o seu limite fixo
+  for (const it of items){
+    if (it.ab !== "LDL") continue;
+    const x = toNum(it.v);
+    if (x === null) continue;
+    if (x >= LDL_LIMIT){ it.flag = "alto"; it.ref = "seu limite: " + LDL_LIMIT + " mg/dL ou mais"; }
+    else it.ref = "abaixo de " + LDL_LIMIT + " mg/dL (seu limite); meta depende do risco, avaliar caso a caso";
+  }
+  if (state.defaults && items.length) applyDefaults(items, pt);
+  attachPrevious();
+}
+const LDL_LIMIT = 120;
+const isAlt = it => it.flag === "alto" || it.flag === "baixo";
+const arrow = it => it.flag === "alto" ? "↑" : it.flag === "baixo" ? "↓" : "";
+
+// ---------- histórico ----------
+const loadHist = () => { try { const h = JSON.parse(localStorage.getItem(HKEY) || "[]"); return Array.isArray(h) ? h : []; } catch(e){ return []; } };
+const saveHist = h => { try { localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 300))); return true; } catch(e){ return false; } };
+const ddmm = iso => iso ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(2, 4) : "";
+// valor anterior do mesmo paciente, de um laudo com data de coleta mais antiga
+function attachPrevious(){
+  for (const it of items){ it.prev = null; }
+  if (!patient.key || !patient.dateFull) return;
+  const older = loadHist().filter(h => h.pkey === patient.key && h.date < patient.dateFull).sort((a,b) => b.date.localeCompare(a.date));
+  for (const it of items){
+    for (const h of older){
+      const o = h.items.find(x => x.key === it.key);
+      if (o){ it.prev = {v:o.v, date:h.date, flag:o.flag}; break; }
+    }
+  }
+}
+let saveTimer;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveCurrent, 900); }
+function saveCurrent(){
+  if (!state.hist || !patient.key || !patient.dateFull || !items.length) return;
+  const h = loadHist();
+  const id = patient.key + "|" + patient.dateFull;
+  const entry = {id, pkey:patient.key, name:$("pname").value.trim().toUpperCase() || patient.name, date:patient.dateFull,
+                 saved:new Date().toISOString(), line:$("out").innerText.trim(),
+                 items:items.map(x => ({key:x.key, ab:x.ab, v:x.v, flag:x.flag || null}))};
+  const k = h.findIndex(x => x.id === id);
+  if (k >= 0){
+    // mesmo laudo colado de novo: junta os exames (um laudo pode vir em partes)
+    const merged = new Map(h[k].items.map(x => [x.key, x]));
+    for (const x of entry.items) merged.set(x.key, x);
+    entry.items = [...merged.values()];
+    h[k] = entry;
+  } else h.push(entry);
+  h.sort((a,b) => b.date.localeCompare(a.date));
+  saveHist(h);
+  renderHist();
+}
+function renderHist(){
+  const h = loadHist();
+  $("hist-empty").hidden = h.length > 0;
+  $("hist-empty").textContent = state.hist ? "Nenhum laudo salvo ainda." : "O histórico está desligado em Mais opções.";
+  $("hist-clear").disabled = !h.length;
+  $("evo-current").disabled = !(patient.key && h.some(x => x.pkey === patient.key));
+  const box = $("hist-list"); box.innerHTML = "";
+  const groups = new Map();
+  for (const e of h){ if (!groups.has(e.pkey)) groups.set(e.pkey, []); groups.get(e.pkey).push(e); }
+  for (const [pkey, es] of groups){
+    const d = document.createElement("details");
+    if (pkey === patient.key) d.open = true;
+    const s = document.createElement("summary");
+    const b = document.createElement("b"); b.textContent = es[0].name || "Sem nome";
+    const sm = document.createElement("small"); sm.textContent = es.length + (es.length === 1 ? " laudo" : " laudos") + " · último " + ddmm(es[0].date);
+    s.append(b, sm); d.append(s);
+    const eb = document.createElement("button"); eb.className = "btn evo-btn"; eb.type = "button"; eb.textContent = "Ver evolução";
+    eb.addEventListener("click", () => openEvolution(pkey)); d.append(eb);
+    for (const e of es){
+      const r = document.createElement("div"); r.className = "hrow";
+      const dt = document.createElement("span"); dt.className = "d"; dt.textContent = ddmm(e.date);
+      const l = document.createElement("span"); l.className = "l"; l.textContent = e.line || e.items.map(x => x.ab + " " + x.v).join(" / ");
+      const c = document.createElement("button"); c.className = "btn"; c.type = "button"; c.textContent = "Copiar";
+      c.addEventListener("click", async () => { const ok = await copyText(l.textContent); c.textContent = ok ? "Copiado" : "Falhou"; });
+      r.append(dt, l, c); d.append(r);
+    }
+    box.append(d);
+  }
+}
+function openEvolution(pkey){
+  const es = loadHist().filter(x => x.pkey === pkey).sort((a,b) => a.date.localeCompare(b.date));
+  if (!es.length) return;
+  $("evo-title").textContent = "Evolução: " + (es[es.length - 1].name || "paciente");
+  const keys = [];
+  for (const e of es) for (const x of e.items) if (!keys.find(k => k.key === x.key)) keys.push({key:x.key, ab:x.ab});
+  const order = k => { const i = ALL.findIndex(ex => ex.key === k); return i < 0 ? 9999 : i; };
+  keys.sort((a,b) => order(a.key) - order(b.key));
+  const t = document.createElement("table"); t.className = "evo";
+  const hr = document.createElement("tr");
+  hr.innerHTML = "<th>Exame</th>" + es.map(e => "<th>" + ddmm(e.date) + "</th>").join("") + "<th>Tendência</th>";
+  const thead = document.createElement("thead"); thead.append(hr); t.append(thead);
+  const tb = document.createElement("tbody");
+  for (const k of keys){
+    const tr = document.createElement("tr");
+    const th = document.createElement("td"); th.textContent = k.ab + (k.key.includes(":") && !k.key.startsWith("cult:") ? " (" + CATS[k.key.split(":")[0]].seg + ")" : ""); tr.append(th);
+    const nums = []; let last = null;
+    for (const e of es){
+      const x = e.items.find(i => i.key === k.key);
+      const td = document.createElement("td");
+      if (!x){ td.textContent = "–"; nums.push(null); }
+      else {
+        td.textContent = x.v + (x.flag === "alto" ? "↑" : x.flag === "baixo" ? "↓" : "");
+        if (x.flag === "alto" || x.flag === "baixo") td.className = "alt";
+        const n = toNum(x.v); nums.push(n);
+        if (n !== null && last !== null && n !== last){
+          const s = document.createElement("span"); s.className = "tr"; s.textContent = n > last ? "▲" : "▼"; s.title = n > last ? "subiu" : "caiu"; td.append(s);
+        }
+        if (n !== null) last = n;
+      }
+      tr.append(td);
+    }
+    const sp = document.createElement("td"); sp.innerHTML = sparkline(nums); tr.append(sp);
+    tb.append(tr);
+  }
+  t.append(tb);
+  $("evo-body").innerHTML = ""; $("evo-body").append(t);
+  openDialog($("evo"));
+}
+function sparkline(nums){
+  const pts = nums.map((v, i) => [i, v]).filter(p => p[1] !== null);
+  if (pts.length < 2) return "";
+  const w = 90, h = 22, pad = 3, n = nums.length - 1 || 1;
+  const vs = pts.map(p => p[1]), lo = Math.min(...vs), hi = Math.max(...vs);
+  const X = i => pad + i / n * (w - 2 * pad), Y = v => hi === lo ? h / 2 : h - pad - (v - lo) / (hi - lo) * (h - 2 * pad);
+  const d = pts.map((p, k) => (k ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+  const lp = pts[pts.length - 1];
+  return '<svg class="spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '" aria-hidden="true"><path d="' + d + '"/><circle r="2.2" cx="' + X(lp[0]).toFixed(1) + '" cy="' + Y(lp[1]).toFixed(1) + '"/></svg>';
+}
+function openDialog(d){ if (typeof d.showModal === "function") d.showModal(); else d.setAttribute("open", ""); }
+function closeDialog(d){ if (typeof d.close === "function") d.close(); else d.removeAttribute("open"); }
+document.querySelectorAll("dialog [data-close]").forEach(b => b.addEventListener("click", () => closeDialog(b.closest("dialog"))));
+document.querySelectorAll("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) closeDialog(d); }));
+$("hist-clear").addEventListener("click", () => openDialog($("confirm")));
+$("confirm-yes").addEventListener("click", () => { saveHist([]); closeDialog($("confirm")); attachPrevious(); render(); renderHist(); });
+$("evo-current").addEventListener("click", () => { saveCurrent(); if (patient.key) openEvolution(patient.key); });
+
+// ---------- tela ----------
+function render(){
+  const box = $("found"); box.innerHTML = "";
+  const hasText = $("src").value.trim().length > 0;
+  $("bulk").hidden = !items.length;
+  $("filter").hidden = items.length < 8;
+  $("count").textContent = !hasText ? "Nenhum laudo colado ainda."
+    : (items.length === 1 ? "1 exame reconhecido" : items.length + " exames reconhecidos")
+      + (items.filter(isAlt).length ? ", " + items.filter(isAlt).length + " fora da referência." : ".");
+  const al = $("alerts"); al.innerHTML = "";
+  const sus = items.filter(x => x.suspect), miss = items.missed || [];
+  const noPt = hasText && items.length && (!$("age").value.trim() || !$("sex").value);
+  const days = hasText ? [...new Set(coletas($("src").value).map(c => c.d + "/" + c.m))] : [];
+  const multi = days.length > 1;
+  if (hasText && (sus.length || miss.length || noPt || multi)){
+    const d = document.createElement("div"); d.className = "alert"; d.setAttribute("role", "status");
+    if (sus.length){
+      const p = document.createElement("p");
+      p.innerHTML = "<strong>Confira:</strong> ";
+      p.append(sus.map(x => x.ab + " " + x.v).join(", ") + (sus.length === 1 ? " está fora do possível e ficou" : " estão fora do possível e ficaram") + " de fora da linha. Veja a origem abaixo e marque se estiver certo.");
+      d.append(p);
+    }
+    if (miss.length){
+      const p = document.createElement("p");
+      p.innerHTML = "<strong>Não reconhecidos:</strong> ";
+      p.append(miss.join(", ") + ". " + (miss.length === 1 ? "Esse exame não entrou" : "Esses exames não entraram") + " na linha.");
+      d.append(p);
+    }
+    if (multi){
+      const p = document.createElement("p");
+      p.innerHTML = "<strong>Coletas em datas diferentes:</strong> ";
+      p.append(days.join(", ") + ". A linha usa a mais recente; corrija a data acima se preferir outra.");
+      d.append(p);
+    }
+    if (noPt){
+      const p = document.createElement("p");
+      p.innerHTML = "<strong>Idade ou sexo não encontrados no laudo.</strong> ";
+      p.append("Referências que dependem deles ficam sem marcação. Preencha os campos acima.");
+      d.append(p);
+    }
+    al.append(d);
+  }
+  const sl = $("srclist"); sl.innerHTML = "";
+  $("srcbox").hidden = !items.length;
+  for (const it of items){
+    const li = document.createElement("li");
+    const b = document.createElement("b"); b.textContent = it.ab + " " + (it.v.length > 40 ? it.v.slice(0, 40) + "…" : it.v);
+    const c = document.createElement("code"); c.textContent = it.src.length > 140 ? it.src.slice(0, 140) + "…" : it.src;
+    const r = document.createElement("span"); r.className = "ref" + (isAlt(it) ? " alt" : "");
+    r.textContent = it.cat === "cult" ? (it.flag === "alto" ? "Cultura positiva." : it.flag === "normal" ? "Sem crescimento." : "Resultado ainda não final.")
+      : it.ab === "LDL" && it.ref ? (isAlt(it) ? "Acima do " : "Sem marcação, ") + it.ref
+      : it.ref ? (isAlt(it) ? (it.flag === "alto" ? "Acima" : "Abaixo") + " da referência: " : it.flag === "normal" ? "Dentro da referência: " : "Referência não interpretada: ") + (it.ref.length > 160 ? it.ref.slice(0, 160) + "…" : it.ref)
+      : (NOREF.has(it.ab) ? "Sem comparação (referência depende de outros fatores)." : "Sem referência reconhecida no laudo.");
+    if (it.prev){ r.append(document.createElement("br"), "Anterior (" + ddmm(it.prev.date) + "): " + it.prev.v); }
+    li.append(b, c, r); sl.append(li);
+  }
+  if (hasText && !items.length){
+    box.innerHTML = '<p class="empty">Nenhum exame reconhecido. Confira se o texto tem o nome do exame e o valor, como "Hemoglobina 14,2 g/dL". Se o laudo for de um laboratório diferente, me mande um exemplo.</p>';
+  }
+  const q = norm($("filter").value.trim());
+  for (const cat of Object.keys(CATS)){
+    const list = items.filter(x => x.cat === cat && (!q || norm(x.ab + " " + (x.ex ? x.ex.re.source : "")).includes(q) || norm(CATS[cat].name).includes(q)));
+    if (!list.length) continue;
+    const g = document.createElement("section"); g.className = "group"; g.style.setProperty("--c", CATS[cat].c);
+    g.innerHTML = '<h2><span class="tube" aria-hidden="true"></span>' + CATS[cat].name + '</h2><div class="chips"></div>';
+    const chips = g.querySelector(".chips");
+    for (const it of list){
+      const l = document.createElement("label"); l.className = "chip" + (it.suspect ? " suspect" : "") + (isAlt(it) ? " altered" : "");
+      if (isAlt(it)) l.title = (it.flag === "alto" ? "Acima" : "Abaixo") + (it.refDefault ? " da referência padrão do app" : " da referência do laboratório");
+      if (it.suspect) l.title = "Valor fora do possível: confira no laudo";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = isOn(it);
+      cb.addEventListener("change", () => {
+        if (it.suspect || zeroOff(it)){ manual.set(it.key, cb.checked); output(); return; }
+        state.off = state.off.filter(a => a !== it.key);
+        if (!cb.checked) state.off.push(it.key);
+        save(); output();
+      });
+      const ab = document.createElement("span"); ab.className = "ab"; ab.textContent = it.ab;
+      const v = document.createElement("span"); v.className = "v"; v.textContent = (it.v.length > 48 ? it.v.slice(0, 48) + "…" : it.v) + arrow(it);
+      l.append(cb, ab, v);
+      if (it.prev && String(it.prev.v) !== String(it.v)){ const p = document.createElement("span"); p.className = "prev"; p.textContent = "ant. " + it.prev.v; l.append(p); }
+      chips.append(l);
+    }
+    box.append(g);
+  }
+  output();
+  renderHist();
+}
+// Monta a linha: exames um a um; urina, gram e gasometria em blocos; frações agrupadas e valor anterior conforme as opções
+function buildLine(sel){
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const up = s => state.upper ? s.toUpperCase() : s;
+  const red = state.mark === "both" || state.mark === "red", arr = state.mark === "both" || state.mark === "arrow", star = state.mark === "star";
+  const prevTxt = x => state.prev && x.prev && String(x.prev.v) !== String(x.v) ? " (ant. " + x.prev.v + ")" : "";
+  const one = x => {
+    const t = esc(up(x.ab + " " + x.v + (arr ? arrow(x) : "") + (star && isAlt(x) ? "*" : "") + prevTxt(x)));
+    return red && isAlt(x) ? '<span class="alt">' + t + "</span>" : t;
+  };
+  const plain = sel.filter(x => !CATS[x.cat].seg);
+  const used = new Set();
+  const parts = [];
+  const GROUPS = {BT:["BD","BI"], PTN:["Alb","Glob"]};
+  for (const x of plain){
+    if (used.has(x)) continue;
+    if (state.group && GROUPS[x.ab]){
+      const kids = GROUPS[x.ab].map(a => plain.find(y => y.ab === a)).filter(Boolean);
+      if (kids.length){ kids.forEach(k => used.add(k)); parts.push(one(x) + " (" + kids.map(one).join(", ") + ")"); continue; }
+    }
+    parts.push(one(x));
+  }
+  for (const cat of Object.keys(CATS)){
+    if (!CATS[cat].seg) continue;
+    let p = sel.filter(x => x.cat === cat);
+    if (!p.length) continue;
+    const label = esc(up(CATS[cat].seg));
+    if (state.compact && cat !== "gram"){
+      const alt = p.filter(isAlt);
+      parts.push(alt.length ? label + ": " + alt.map(one).join(", ") + (alt.length < p.length ? esc(up(", demais s/a")) : "") : label + esc(up(" s/a")));
+    } else parts.push(label + ": " + p.map(one).join(", "));
+  }
+  return parts.join(esc(state.sep));
+}
+// ---------- data no início da linha ----------
+const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const SEMANA = ["dom","seg","ter","qua","qui","sex","sáb"];
+// Lê o campo "Data da coleta" (dd/mm, dd/mm/aa ou dd/mm/aaaa); o ano vem do campo, do laudo ou do calendário
+function coletaDate(txt){
+  const m = (txt || "").match(/^\s*(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*$/);
+  if (!m) return null;
+  const d = +m[1], mo = +m[2];
+  if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+  let y = m[3] ? +m[3] : null;
+  if (y !== null && y < 100) y += 2000;
+  if (y === null && patient.dateFull && +patient.dateFull.slice(8, 10) === d && +patient.dateFull.slice(5, 7) === mo) y = +patient.dateFull.slice(0, 4);
+  if (y === null){ const now = new Date(); y = now.getFullYear(); if (new Date(y, mo - 1, d) - now > 7 * 864e5) y--; }
+  return new Date(y, mo - 1, d, 12);
+}
+function relDay(dt){
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const n = Math.round((today - dt) / 864e5);
+  return n === 0 ? "hoje" : n === 1 ? "ontem" : n === 2 ? "anteontem" : n > 2 && n <= 30 ? "há " + n + " dias" : n === -1 ? "amanhã" : null;
+}
+function formatHead(prefix, dateTxt, fmt){
+  const P = (prefix || "").trim();
+  const dt = coletaDate(dateTxt);
+  const raw = (dateTxt || "").trim();
+  if (!raw || fmt === "none") return P;
+  const p2 = n => String(n).padStart(2, "0");
+  const dm = dt ? p2(dt.getDate()) + "/" + p2(dt.getMonth() + 1) : raw;
+  let D;
+  switch (fmt){
+    case "yy":   D = dt ? dm + "/" + String(dt.getFullYear()).slice(2) : raw; break;
+    case "yyyy": D = dt ? dm + "/" + dt.getFullYear() : raw; break;
+    case "mon":  D = dt ? dt.getDate() + "/" + MESES[dt.getMonth()] : raw; break;
+    case "dow":  D = dt ? dm + " (" + SEMANA[dt.getDay()] + ")" : raw; break;
+    case "rel":  { const r = dt && relDay(dt); D = r ? r + ", " + dm : dm; break; }
+    default:     D = dm;
+  }
+  const join = (...xs) => xs.filter(Boolean).join(" ");
+  switch (fmt){
+    case "plain": case "yyyy": case "mon": case "dow": return join(P, D);
+    case "bracket": return join(P, "[" + D + "]");
+    case "dash":  return P ? P + " – " + D : D;
+    case "de":    return P ? P + " de " + D : D;
+    case "first": return P ? D + " – " + P : D;
+    case "firstparen": return join("(" + D + ")", P);
+    default:      return join(P, "(" + D + ")");   // paren, yy, rel
+  }
+}
+// As opções do seletor mostram como fica com o seu prefixo e a data do laudo
+function updateDateOptions(){
+  const sample = $("date").value.trim() || (() => { const t = new Date(); t.setDate(t.getDate() - 1); return String(t.getDate()).padStart(2, "0") + "/" + String(t.getMonth() + 1).padStart(2, "0"); })();
+  for (const o of $("dfmt").options){
+    const h = formatHead(state.prefix, sample, o.value);
+    o.textContent = (h ? h + ":" : ":") + (o.value === "none" ? " (sem data)" : "");
+  }
+}
+function output(){
+  const sel = items.filter(isOn);
+  const head = formatHead(state.prefix, $("date").value, state.dfmt);
+  updateDateOptions();
+  const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const h = state.upper ? head.toUpperCase() : head;
+  $("out").innerHTML = sel.length ? (h ? esc(h) + ": " : "") + buildLine(sel) : "";
+  $("copy").disabled = !sel.length;
+  $("copy").textContent = "Copiar";
+}
+
+let t;
+$("src").addEventListener("input", () => { clearTimeout(t); t = setTimeout(extract, 200); });
+$("date").addEventListener("input", output);
+$("dfmt").addEventListener("change", e => { state.dfmt = e.target.value; save(); output(); });
+$("filter").addEventListener("input", render);
+$("pname").addEventListener("change", () => { const n = $("pname").value.trim().toUpperCase(); if (n){ patient.name = n; patient.key = patient.birth ? n.split(" ")[0] + "|" + patient.birth : n; judgeAll(); render(); scheduleSave(); } });
+$("prefix").addEventListener("input", e => { state.prefix = e.target.value; save(); output(); });
+$("sep").addEventListener("change", e => { state.sep = e.target.value; save(); output(); });
+$("diff").addEventListener("change", e => { state.diff = e.target.value; save(); extract(); });
+$("mark").addEventListener("change", e => { state.mark = e.target.value; save(); output(); });
+for (const [k, id] of Object.entries(OPTS)) $(id).addEventListener("change", e => {
+  state[k] = e.target.checked; save();
+  if (k === "defaults") judgeAll();
+  if (k === "hist" && state.hist) scheduleSave();
+  render();
+});
+$("age").addEventListener("input", () => { judgeAll(); render(); });
+$("sex").addEventListener("change", () => { judgeAll(); render(); });
+$("clear").addEventListener("click", () => { $("src").value = ""; $("date").value = ""; $("age").value = ""; $("sex").value = ""; $("filter").value = ""; extract(); $("src").focus(); });
+$("all").addEventListener("click", () => { const abs = items.map(x => x.key); state.off = state.off.filter(a => !abs.includes(a)); for (const x of items) if (x.suspect) manual.set(x.key, true); save(); render(); });
+$("none").addEventListener("click", () => { for (const x of items){ if (x.suspect) manual.set(x.key, false); else if (!state.off.includes(x.key)) state.off.push(x.key); } save(); render(); });
+$("sample").addEventListener("click", () => {
+  $("src").value = [
+    "LABORATÓRIO EXEMPLO - Paciente: Fulano de Tal  Nascimento: 01/01/1960",
+    "Data da coleta: 15/06/2026 07:30",
+    "HEMOGRAMA",
+    "Hemácias.................. 4,52 milhões/mm³   4,30 a 5,70",
+    "Hemoglobina............... 13,8 g/dL          13,0 a 17,5",
+    "Hematócrito............... 41,2 %             39,0 a 50,0",
+    "VCM....................... 91,2 fL",
+    "RDW....................... 13,1 %",
+    "Leucócitos................ 11.400 /mm³        3.500 a 10.500",
+    "Bastonetes................ 2 %   228 /mm³",
+    "Segmentados............... 78 %  8.892 /mm³",
+    "Linfócitos................ 14 %  1.596 /mm³",
+    "Plaquetas................. 245.000 /mm³",
+    "Ureia..................... 48 mg/dL",
+    "Creatinina................ 1,3 mg/dL",
+    "Sódio..................... 136 mEq/L",
+    "Potássio.................. 4,8 mEq/L",
+    "Proteína C reativa........ 8,4 mg/dL",
+    "Tempo de protrombina...... 13,1 seg",
+    "INR....................... 1,08",
+    "Lactato................... 1,9 mmol/L"
+  ].join("\n");
+  extract();
+});
+async function copyText(text, html){
+  try {
+    if (html) await navigator.clipboard.write([new ClipboardItem({"text/html": new Blob([html], {type:"text/html"}), "text/plain": new Blob([text], {type:"text/plain"})})]);
+    else await navigator.clipboard.writeText(text);
+    return true;
+  } catch(e){
+    try { await navigator.clipboard.writeText(text); return true; } catch(e2){
+      const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.append(ta); ta.select(); let ok = false;
+      try { ok = document.execCommand("copy"); } catch(e3){}
+      ta.remove(); return ok;
+    }
+  }
+}
+// Copia em dois formatos: com cor (para prontuários que aceitam texto formatado) e texto simples
+$("copy").addEventListener("click", async () => {
+  const o = $("out");
+  const text = o.innerText.replace(/ /g, " ").trim();
+  const html = '<span>' + o.innerHTML.replace(/<span class="alt">/g, '<span style="color:#C00000;font-weight:bold">') + '</span>';
+  const ok = await copyText(text, html);
+  $("copy").textContent = ok ? "Copiado" : "Selecione e copie";
+  saveCurrent();
+});
+
+// ---------- ferramentas ----------
+$("dl").addEventListener("click", async () => {
+  // na página publicada no Claude, o download passa pela confirmação da plataforma
+  const dls = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads").catch(() => null) : null;
+  if (dls){
+    try { await dls.save({filename: "linha-de-exames.html", data: PAGE_SRC}); $("dl").textContent = "Arquivo salvo"; }
+    catch(e){ $("dl").textContent = e && e.code === "declined" ? "Download cancelado" : "Download indisponível aqui"; }
+    setTimeout(() => $("dl").textContent = "Baixar para uso offline", 2500);
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([PAGE_SRC], {type:"text/html"}));
+  a.download = "linha-de-exames.html"; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+$("diag").addEventListener("click", async () => {
+  const r = ["RELATÓRIO DE DIAGNÓSTICO — Linha de exames", "Gerado em: " + new Date().toLocaleString("pt-BR"),
+    "Formato: " + ($("fmt").textContent.replace("Formato reconhecido: ", "") || "—"),
+    "Idade: " + ($("age").value || "—") + " | Sexo: " + ($("sex").value || "—") + " | Coleta: " + ($("date").value || "—"),
+    "Opções: " + JSON.stringify({mark:state.mark, diff:state.diff, prev:state.prev, compact:state.compact, group:state.group, defaults:state.defaults}), "",
+    "EXAMES (" + items.length + ")"];
+  for (const it of items) r.push("- " + it.ab + " = " + it.v + " | " + (it.flag || "sem marcação") + (it.refDefault ? " (padrão do app)" : "") + (it.suspect ? " | FORA DO POSSÍVEL" : "")
+    + "\n    linha: " + it.src.slice(0, 200) + "\n    referência: " + (it.ref || "—"));
+  r.push("", "NÃO RECONHECIDOS: " + ((items.missed || []).join(", ") || "nenhum"), "", "LINHA FINAL:", $("out").innerText.trim());
+  let txt = r.join("\n");
+  if (patient.name) for (const w of patient.name.split(" ").filter(w => w.length > 2)) txt = txt.split(w).join("•••");
+  const ok = await copyText(txt);
+  $("diag").textContent = ok ? "Relatório copiado" : "Não foi possível copiar";
+  setTimeout(() => $("diag").textContent = "Copiar relatório de diagnóstico", 2500);
+});
+$("selftest").addEventListener("click", () => {
+  const out = $("testout"); out.hidden = false;
+  const res = runEmbeddedTests();
+  out.textContent = res.lines.join("\n") + "\n\n" + (res.fail ? res.fail + " de " + res.total + " testes falharam." : "Todos os " + res.total + " testes passaram.");
+});
+
+// Tema: Auto segue o celular/computador; Claro e Escuro ficam fixos
+function setTheme(t){
+  if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  try { localStorage.setItem("linhaExames.theme", t); } catch(e){}
+  document.querySelectorAll(".theme button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === t)));
+  const dark = t === "dark" || (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#14202A" : "#24598C";
+}
+document.querySelectorAll(".theme button").forEach(b => b.addEventListener("click", () => setTheme(b.dataset.t)));
+setTheme(document.documentElement.dataset.theme || "auto");
+render();
+</script>
+
+</body>
+</html>
