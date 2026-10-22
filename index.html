@@ -1440,10 +1440,14 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // ================= Versão e impressão digital =================
 // APP_VERSION: AAAA.MM.DD-n (ordem cronológica). BUILD_HASH: SHA-256 deste arquivo com o próprio BUILD_HASH zerado,
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
-const APP_VERSION = "2026.10.22-1";
-const BUILD_HASH = "7e239c0b57def5d54ca3b14d2808c48482474434668295702036f05a23af3b07";
+// Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
+// comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
+const APP_VERSION = "2026.10.22-2";
+const BUILD_HASH = "d7e8f923e7afe30655c9c2d3aa46ef4fba32cb12985ae9c07831e76ab5618791";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
+const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
+  .replace(/<!--[\s\S]*?-->/g, "").replace(/[ \t\n\r\f\v]+/g, "");
 async function sha256Hex(txt){
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt));
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
@@ -1468,7 +1472,7 @@ async function checkVersion(){
   }
   if (sv !== APP_VERSION){ $("ver").textContent = base + " · servidor com versão diferente: " + sv; return; }
   let ok = false;
-  try { ok = (await sha256Hex(txt.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2"))) === BUILD_HASH; } catch(e){}
+  try { ok = (await sha256Hex(canonical(txt))) === BUILD_HASH; } catch(e){}
   $("ver").textContent = base + " · integridade: " + (ok ? "verificada (é a versão publicada)" : "FALHOU — arquivo servido não confere com a impressão digital");
 }
 $("upd-go").addEventListener("click", () => location.reload());
