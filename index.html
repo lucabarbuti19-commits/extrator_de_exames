@@ -93,12 +93,14 @@ details.src code{font-family:inherit;color:var(--muted);overflow-wrap:anywhere}
 .chip.altered{border-color:var(--alt)}
 details.src li .ref{grid-column:2;font-size:.82rem;color:var(--muted);overflow-wrap:anywhere;min-width:0}
 details.src li .ref.alt{color:var(--alt)}
-.act{flex:none;display:flex;flex-direction:column;gap:6px;width:96px}
-.upt{display:flex;align-items:center;justify-content:center;gap:4px;min-height:26px;padding:0 4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);font-size:.62rem;font-weight:650;letter-spacing:.02em;white-space:nowrap;cursor:pointer;user-select:none}
-.upt input{margin:0;width:13px;height:13px;accent-color:var(--accent)}
-.upt:has(input:checked){border-color:var(--accent);color:var(--accent)}
-.upt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
-#copy{flex:1;min-height:32px;border:0;border-radius:8px;padding:0 18px;background:var(--accent);color:var(--accent-ink);font-weight:650;cursor:pointer}
+.out-in{flex-wrap:wrap}
+.tbar{flex:0 0 100%;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);margin-bottom:-2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg label{position:relative;padding:3px 10px;cursor:pointer;font-weight:650;font-size:.75rem;color:var(--muted)}
+.seg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.seg label:has(input:checked){background:var(--accent);color:var(--accent-ink)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+#copy{flex:none;border:0;border-radius:8px;padding:0 18px;background:var(--accent);color:var(--accent-ink);font-weight:650;cursor:pointer;min-width:96px}
 #copy:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 #copy:disabled{opacity:.45;cursor:default}
 .note{font-size:.8rem;color:var(--muted);margin-top:28px}
@@ -295,11 +297,9 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
 
 <div class="out">
   <div class="out-in">
+    <div class="tbar"><span>Linha pronta</span><span class="seg" role="radiogroup" aria-label="Letras da linha"><label title="Como no laudo"><input type="radio" name="caixa" id="o-normal" checked>Aa</label><label title="Linha toda em maiúsculas"><input type="radio" name="caixa" id="o-upper">AA</label></span></div>
     <div id="out" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Linha pronta para copiar" data-placeholder="A linha formatada aparece aqui"></div>
-    <div class="act">
-      <button id="copy" type="button" disabled>Copiar</button>
-      <label class="upt" title="Linha toda em maiúsculas"><input type="checkbox" id="o-upper"><span>MAIÚSCULAS</span></label>
-    </div>
+    <button id="copy" type="button" disabled>Copiar</button>
   </div>
 </div>
 
@@ -1449,8 +1449,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.22-3";
-const BUILD_HASH = "831ad0ca26f8a485fab56d05adbd94765f04b5c5b981fbdc929e57483a7d74f4";
+const APP_VERSION = "2026.10.22-4";
+const BUILD_HASH = "d30015e7bb8aeb80c8a25146148b6c942103f26da4e291dc05ad6f44cee840b5";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -1491,6 +1491,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } c
 $("prefix").value = state.prefix; $("dfmt").value = state.dfmt; $("sep").value = state.sep; $("diff").value = state.diff; $("mark").value = state.mark;
 const OPTS = {prev:"o-prev", compact:"o-compact", group:"o-group", upper:"o-upper", defaults:"o-defaults", hist:"o-hist"};
 for (const [k, id] of Object.entries(OPTS)) $(id).checked = !!state[k];
+$("o-normal").checked = !state.upper;
 
 let items = [];
 let manual = new Map();   // escolhas feitas neste laudo para valores suspeitos
@@ -1869,6 +1870,15 @@ for (const [k, id] of Object.entries(OPTS)) $(id).addEventListener("change", e =
   if (k === "hist" && state.hist) scheduleSave();
   render();
 });
+// a barra fixa da linha cresce com o conteúdo: o fim da página sempre fica acima dela
+{ const bar = document.querySelector(".out"), wrap = document.querySelector(".wrap");
+  const fit = () => { wrap.style.paddingBottom = Math.max(190, Math.ceil(bar.getBoundingClientRect().height) + 24) + "px"; };
+  try { new ResizeObserver(fit).observe(bar); } catch(e){ addEventListener("resize", fit); } fit(); }
+// a barra fixa da linha cresce com o conteúdo: o fim da página sempre fica acima dela
+{ const bar = document.querySelector(".out"), wrap = document.querySelector(".wrap");
+  const fit = () => { wrap.style.paddingBottom = Math.max(190, Math.ceil(bar.getBoundingClientRect().height) + 24) + "px"; };
+  try { new ResizeObserver(fit).observe(bar); } catch(e){ addEventListener("resize", fit); } fit(); }
+$("o-normal").addEventListener("change", e => { if (e.target.checked){ state.upper = false; save(); render(); } });
 $("age").addEventListener("input", () => { judgeAll(); render(); });
 $("sex").addEventListener("change", () => { judgeAll(); render(); });
 $("clear").addEventListener("click", () => { $("src").value = ""; $("date").value = ""; $("age").value = ""; $("sex").value = ""; $("filter").value = ""; extract(); $("src").focus(); });
