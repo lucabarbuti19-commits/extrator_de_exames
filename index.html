@@ -313,6 +313,7 @@ const CATS = {
   heparina:{name:"Gasometria", c:"var(--heparina)"},
   fluoreto:{name:"Glicose", c:"var(--fluoreto)"},
   preto:{name:"VHS", c:"var(--preto)"},
+  fezes:{name:"Fezes", c:"var(--urina)"},
   u24:{name:"Urina de 24 horas", c:"var(--urina)"},
   urina:{name:"Urina tipo I", c:"var(--urina)", seg:"U1"},
   gram:{name:"Bacterioscópico de urina", c:"var(--gram)", seg:"Gram U"},
@@ -333,7 +334,7 @@ const EX = [
   ["VCM","edta","vcm|volume corpuscular medio"],
   ["HCM","edta","hcm|hemoglobina corpuscular media"],
   ["CHCM","edta","chcm|concentracao de hemoglobina corpuscular media|concentracao da hemoglobina corpuscular media"],
-  ["RDW","edta","rdw(?:-cv)?"],
+  ["RDW","edta","rdw(?:-cv)?|coeficiente de variacao do volume eritrocitario(?: \\(rdw\\))?"],
   ["Leuco","edta","leucocitos(?: totais)?|leuco"],
   ["Bast","edta","bastonetes|bastoes",1],
   ["Seg","edta","segmentados",1],
@@ -347,12 +348,13 @@ const EX = [
   ["Mono","edta","monocitos",1],
   ["Eos","edta","eosinofilos",1],
   ["Baso","edta","basofilos",1],
-  ["Plaq","edta","plaquetas|contagem de plaquetas"],
+  ["Plaq","edta","plaquetas|contagem de plaquetas|total de plaquetas"],
+  ["VPM","edta","volume plaquetario medio|vpm"],
   ["Retic","edta","reticulocitos"],
   ["HbA1c","edta","hemoglobina glicada|hemoglobina glicosilada|hba1c|a1c"],
   ["Ur","soro","ureia|ur"],
   ["Cr","soro","creatinina|cr"],
-  ["TFG","soro","(?:(?:estimativa da )?(?:taxa|ritmo) de filtracao glomerular|filtracao glomerular|e?gfr|e?tfg ?e?|rfg ?e?|clearance (?:de creatinina )?estimado)(?: estimad[ao]| calculad[ao])?(?:\\s*\\(?\\s*e?(?:tfg|rfg|gfr)e?\\s*\\)?)?(?:[ ,\\-–:]*\\(?\\s*(?:ckd ?-? ?epi|mdrd|cockcroft(?:[ -]gault)?)(?:\\s*(?:versao\\s*)?20\\d\\d)?\\s*\\)?)?"],
+  ["TFG","soro","ckd ?-? ?epi 2021(?=\\s*:)|(?:(?:estimativa da )?(?:taxa|ritmo) de filtracao glomerular|filtracao glomerular|e?gfr|e?tfg ?e?|rfg ?e?|clearance (?:de creatinina )?estimado)(?: estimad[ao]| calculad[ao])?(?:\\s*\\(?\\s*e?(?:tfg|rfg|gfr)e?\\s*\\)?)?(?:[ ,\\-–:]*\\(?\\s*(?:ckd ?-? ?epi|mdrd|cockcroft(?:[ -]gault)?)(?:\\s*(?:versao\\s*)?20\\d\\d)?\\s*\\)?)?"],
   ["Na","soro","sodio|na"],
   ["K","soro","potassio|k"],
   ["Cl","soro","cloreto|cloro|cl"],
@@ -384,7 +386,7 @@ const EX = [
   ["CPK","soro","cpk|ck|creatinoquinase|creatina ?quinase|creatinofosfoquinase"],
   ["CKMB","soro","ck-? ?mb|cpk-? ?mb"],
   ["Trop","soro","troponina(?: [it])?(?: ultrassensivel| us| hs)?"],
-  ["PCR","soro","pcr|proteina c reativa"],
+  ["PCR","soro","pcr|proteina c ?-? ?reativa"],
   ["PCT","soro","procalcitonina"],
   ["CT","soro","colesterol total|ct"],
   ["HDL","soro","hdl(?: colesterol)?|colesterol hdl"],
@@ -413,9 +415,9 @@ const EX = [
   ["Ferritina","soro","ferritina"],
   ["Transferrina","soro","transferrina"],
   ["IST","soro","indice de saturacao (?:de|da) transferrina|saturacao (?:de|da) transferrina|ist"],
-  ["CTLF","soro","capacidade total de (?:ligacao|fixacao) do ferro|ctlf|tibc"],
+  ["CTLF","soro","capacidade total de (?:ligacao|fixacao) do ferro|(?:ligacao|fixacao) do ferro,? capacidade total|ctlf|tibc"],
   ["Fe","soro","ferro(?: serico)?|fe"],
-  ["B12","soro","vitamina b12|b12|cobalamina"],
+  ["B12","soro","vitamina b ?-? ?12|b ?-? ?12|cobalamina"],
   ["Folato","soro","acido folico|folato(?: serico)?"],
   ["VitD","soro","vitamina d(?:[ ,]*\\(?25 ?-? ?(?:oh|hidroxi)\\)?)?|25 ?-? ?oh vitamina d|25 ?-? ?hidroxi ?vitamina d"],
   ["BNP","soro","bnp"],
@@ -439,6 +441,7 @@ const EX = [
   ["Metanefrina","u24","metanefrina(?: livre)?"],
   ["Normetanefrina","u24","normetanefrinas?(?: livre)?"],
   ["Vol 24h","u24","volume urinario(?: de 24 ?h(?:oras)?| em 24 ?h(?:oras)?)?|volume de 24 ?h(?:oras)?"],
+  ["Calpro","fezes","calprotectina(?: fecal)?"],
   ["Gli","fluoreto","glicose(?: de jejum| plasmatica| serica)?|glicemia(?: de jejum)?"],
   ["GME","fluoreto","glicose media estimada|\\(?gme\\)?|\\(?eag\\)?"],
   ["VHS","preto","vhs|velocidade de hemossedimentacao"],
@@ -617,7 +620,7 @@ const QUAL = [
   [/^negativ[oa]s?/,"Neg"],[/^positiv[oa]s?/,"Pos"],
   [/^ausentes?(?:\s*\(s\))?/,"Aus"],[/^presentes?(?:\s*\(s\))?/,"Pres"],
   [/^indeterminad[oa]|^inconclusiv[oa]/,"Indet"],
-  [/^tracos/,"Traços"],[/^raros?/,"Raros"],[/^raras/,"Raras"],[/^alguns|^algumas/,"Alguns"],
+  [/^tracos/,"Traços"],[/^rarissim[oa]s/,"Raríssimas"],[/^raros?/,"Raros"],[/^raras/,"Raras"],[/^alguns|^algumas/,"Alguns"],
   [/^frequentes/,"Freq"],[/^numeros[oa]s/,"Numerosos"],[/^(\+{1,4})(?![\d])/,null]
 ];
 const REF_START = /^(?:inferior|superior|ate |menor|maior|abaixo|acima|entre|desejavel|otimo|limitrofe|normal|adultos?|homens?|mulheres?|criancas?|valor de referencia|de \d|com jejum|sem jejum|risco|meta)/;
@@ -660,6 +663,12 @@ function blankRefs(t){
   return o;
 }
 // Lê o valor de um trecho. strict = linha solta abaixo do nome (precisa parecer um resultado)
+// urina: "inferior a 0,10 g/L" é resultado (abaixo do limite de detecção), não referência
+function urineLT(raw, ex){
+  if (!ex || ex.cat !== "urina") return null;
+  const m = norm(stripName(raw, ex)).match(/^\s*(?:inferior a|menor que|<)\s*(\d+(?:[.,]\d+)?)/);
+  return m ? "<" + m[1] : null;
+}
 function readValue(raw, ex, diffMode, strict){
   let t = stripName(raw, ex);
   let n = norm(t).replace(/^resultados?\s*[:\-]?\s*/, "");
@@ -698,7 +707,9 @@ function readValue(raw, ex, diffMode, strict){
     if (/\d/.test(n.slice(0, 3))) return null;
     const caps = t.match(/^[A-ZÀ-Ú][A-ZÀ-Ú ]*[A-ZÀ-Ú](?=\s+[A-ZÀ-Ú][a-zà-ú]|\s{2,}|$)/);
     const txt = (caps ? caps[0] : t.split(/\s{2,}/)[0]).trim();
-    return txt && txt.length < 30 ? titleCase(txt) : null;
+    const w = txt.split(/\s+/), half = w.length / 2;
+    const dedup = w.length % 2 === 0 && norm(w.slice(0, half).join(" ")) === norm(w.slice(half).join(" ")) ? w.slice(0, half).join(" ") : txt;
+    return dedup && dedup.length < 30 ? titleCase(dedup) : null;
   }
   if (!/^(?:[<>≤≥]\s?)?-?\d/.test(n)) return null;
   const v = pick(numbersIn(t), ex, diffMode);
@@ -706,7 +717,7 @@ function readValue(raw, ex, diffMode, strict){
   return v;
 }
 // Fim de um bloco de exame no laudo: descarta nomes que ficaram sem valor
-const BLOCK_END = /^\s*(?:material|data (?:da )?assinatura|liberado|assinad|exames assinados|laudo assinado)/;   // "Material" é fraco (ver parse)
+const BLOCK_END = /^\s*(?:material|data (?:da )?assinatura|liberado|assinad|exames assinados|laudo assinado|recebido\/coletado|recebido em|coletado em)/;   // "Material" é fraco (ver parse)
 const RESULT_INLINE = /^\s*resultados?\s*[:\-]?\s*(?:[<>≤≥]?\s?-?\d|nao|reag|neg|pos|det|indet|aus|pres)/;
 // Lê um bloco de cultura: crescimento negativo, microrganismo, contagem de colônias e antibiograma (S/I/R)
 const GENERA = "escherichia|klebsiella|proteus|enterobacter|citrobacter|serratia|morganella|providencia|pseudomonas|acinetobacter|stenotrophomonas|burkholderia|staphylococcus|streptococcus|enterococcus|corynebacterium|listeria|haemophilus|moraxella|neisseria|salmonella|shigella|candida|cryptococcus|aspergillus|clostridioides|clostridium|bacteroides|mycobacterium|micrococcus|bacillus|aeromonas|raoultella|hafnia";
@@ -818,9 +829,18 @@ function parseTOTG(c){
   const ref = Object.keys(thr).length ? "Normal: " + Object.entries(thr).map(([t, x]) => (+t ? t + "'" : "jejum") + " <" + x).join(", ") : null;
   return {v, flag, ref, src: c.title + " | " + pts.map(p => p[0] + ": " + p[1]).join(" | ")};
 }
+// exames cujo resultado pode vir escrito como "superior a 90" / "superior a 1800 mcg/g": vira ">90" / ">1800"
+const GT_OK = new Set(["TFG", "Calpro"]);
 function parse(text, diffMode){
   const lines = text.replace(/\u00ad/g, "-").replace(/[\u00a0\u2007\u202f]/g, " ").split(/\r?\n/);
   const evo = evolutiveSpans(lines);
+  for (let i = 0; i + 1 < lines.length; i++){
+    const a = lines[i], b = lines[i + 1];
+    if (!a.trim() || /\d|:/.test(a) || !/[A-ZÀ-Ú]{4}/.test(a) || /[a-zà-ú]/.test(a) || !/^\s*[A-ZÀ-Ú][A-ZÀ-Ú ()]*:\s*\d/.test(b)) continue;
+    const joined = a.trim() + " " + b.trim();
+    const hj = matchExam(norm(joined), EX), ha = matchExam(norm(a.trim()), EX);
+    if (hj && (!ha || hj.len > norm(a.trim()).length) && hj.len > norm(a.trim()).length){ lines[i] = joined; lines[i + 1] = ""; }
+  }
   for (const [a, b] of evo) for (let k = a; k < b; k++) lines[k] = "";
   const found = new Map();
   let pending = [];   // exames cujo nome apareceu sem valor, na ordem em que apareceram
@@ -834,7 +854,7 @@ function parse(text, diffMode){
       ni: nameAt.has(ex) ? nameAt.get(ex) : vi, vi, order:ALL.indexOf(ex)};
     if (ex.diff){   // diferencial: guarda % e absoluto, porque a referência pode ser de um ou de outro
       const h = matchExam(norm(src), [ex]);
-      const nums = numbersIn(blankRefs(h ? src.slice(h.len) : src));
+      const nums = numbersIn(blankRefs(h ? stripName(src.slice(h.len), ex) : src));
       const pc = nums.find(x => x.pct), ab = nums.find(x => !x.pct);
       if (nums.length >= 2 && !pc){ it.vPct = nums[0].v; it.vAbs = nums[1].v; }
       else if (pc && ab){ it.vPct = pc.v; it.vAbs = ab.v; }
@@ -933,10 +953,11 @@ function parse(text, diffMode){
       if (found.has(ex.key)) continue;          // repetição na coluna de referência
       const rest = line.slice(hit.len);
       let v = rest.trim() ? readValue(rest, ex, diffMode, false) : null;
-      if (v === null && ex.ab === "TFG"){
+      if (v === null && GT_OK.has(ex.ab)){
         const m = norm(stripName(rest, ex)).match(/^\s*(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
         if (m) v = ">" + m[1];
       }
+      if (v === null) v = urineLT(rest, ex);
       if (v !== null) store(ex, v, line, i);
       else if (!/\d|reagente|positivo|negativo|detectad|ausente|presente/.test(norm(stripName(rest, ex)))){
         if (!pending.includes(ex)){ pending.push(ex); nameAt.set(ex, i); }
@@ -1000,12 +1021,41 @@ function parse(text, diffMode){
       i = j - 1; continue;
     }
     if (!pending.length) continue;
-    const tfgP = pending.find(p => p.ab === "TFG");
+    const tfgP = pending.find(p => GT_OK.has(p.ab));
     if (tfgP){
       const m = n.match(/^\s*(?:resultados?\s*:?\s*)?(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
       if (m && (/^\s*resultado/.test(n) || pending[0] === tfgP)){ store(tfgP, ">" + m[1], line, i); continue; }
+      // "superior a 1800 mcg/g de fezes   NORMAL : Inferior a 50": logo abaixo do cabeçalho RESULTADO, com a referência ao lado
+      const m2 = n.match(/^\s*(?:superior a|maior que|acima de|>)\s*(\d+(?:[.,]\d+)?)\b/);
+      if (m2 && pending[0] === tfgP && /resultado|referencia/.test(prevLine(i)) && gap(nameAt.get(tfgP) ?? i, i) <= 4){ store(tfgP, ">" + m2[1], line, i); continue; }
     }
     if (chartDoc && !RESULT_INLINE.test(n) && gap(nameAt.get(pending[0]) ?? i, i) > 3) continue;   // longe do nome, num laudo com gráficos: não arrisca
+    // diferencial em colunas separadas logo abaixo do nome: ": 52,6" (ou ":" e "52,6") e, na linha seguinte, "3.490"
+    if (pending[0].diff && gap(nameAt.get(pending[0]) ?? i, i) <= 1 && /^\s*:?\s*(?:-?\d+(?:[.,]\d+)*)?\s*$/.test(line)){
+      const P = pending[0], got = []; let j = i, last = i;
+      for (; j < lines.length && got.length < 2; j++){
+        const t = lines[j].trim(); if (!t) continue;
+        if (t === ":" && !got.length){ last = j; continue; }
+        const m = t.match(/^:?\s*(-?\d+(?:[.,]\d+)*)$/); if (!m) break;
+        got.push(m[1]); last = j;
+      }
+      if (got.length === 2 && parseFloat(got[0].replace(",", ".")) <= 100){
+        store(P, diffMode === "abs" ? got[1] : got[0], got.join(" "), i);
+        i = last; continue;
+      }
+    }
+    // valores em colunas separadas, começando com ":" — "Ferro" / ": 93 mcg/dL" ou "COR" "ASPECTO" ... / ": amarela" ": límpido" ...
+    if (/^\s*:\s*\S/.test(line)){
+      const run = []; for (let j = i; j < lines.length; j++){ if (!lines[j].trim()) continue; if (/^\s*:\s*\S/.test(lines[j])) run.push(j); else if (/^\s*:\s*$/.test(lines[j])) continue; else break; }
+      const prevIdx = (() => { for (let j = i - 1; j >= 0; j--) if (lines[j].trim()) return j; return -1; })();
+      // nomes logo acima, um por linha, na mesma ordem
+      const names = []; for (let j = prevIdx; j >= 0 && names.length < run.length; j--){ if (!lines[j].trim()) continue; const p = pending.find(q => nameAt.get(q) === j); if (!p) break; names.unshift(p); }
+      if (names.length === run.length){
+        run.forEach((j, k) => { const P = names[k], raw = lines[j].replace(/^\s*:/, " "); const v = readValue(raw, P, diffMode, true) ?? urineLT(raw, P); if (v !== null) store(P, v, lines[j], j); else unresolved.add(P); });
+        i = run[run.length - 1]; continue;
+      }
+      if (run.length >= 2){ for (const p of pending) unresolved.add(p); pending = []; i = run[run.length - 1]; continue; }   // não alinha: não arrisca
+    }
     // "Método: Jaffé sem desproteinização 0,86 mg/dL": a parte do método some e o valor fica
     const nb = norm(blankRefs(line)).trimStart();
     if (!nb || (LABEL.test(nb) && !RESULT_INLINE.test(nb))) continue;
@@ -1020,7 +1070,7 @@ function parse(text, diffMode){
       if (m && /corresponde|equivale|estimada de/.test(norm(lines[i] + " " + (lines[i + 1] || "")))){ const ex = EX.find(e => e.ab === "GME"); store(ex, m[1], lines[i] + " " + (lines[i + 1] || ""), i); break; }
     }
   }
-  for (const p of [...unresolved, ...(chartDoc ? pending : [])]) if (!found.has(p.key)) missed.push(p.ab + " (valor não localizado com segurança)");
+  for (const p of [...unresolved, ...(chartDoc ? pending : [])]) if (!found.has(p.key) && p.ab[0] !== "_") missed.push(p.ab + " (valor não localizado com segurança)");
   // frações da eletroforese ("ALFA-1 GLOBULINAS"): só servem para manter a coluna alinhada
   const hidden = [...found.values()].filter(x => x.ab[0] === "_");
   const out = [...found.values()].filter(x => x.ab[0] !== "_").sort((a,b) => a.order - b.order);
@@ -1054,7 +1104,8 @@ function toNum(v){
 function implausible(it){
   const r = (it.cat === "urina" ? PLAUS_U : CATS[it.cat].seg ? {} : (it.ab === "pH" ? {pH:[6.5,8]} : PLAUS))[it.ab];
   if (!r) return false;
-  const x = toNum(it.v);
+  let x = toNum(it.v);
+  if (it.ab === "Dens" && x !== null && x > 0.9 && x < 1.1) x *= 1000;   // densidade escrita "1,018" ou "1018"
   return x !== null && (x < r[0] || x > r[1]);
 }
 // ================= Referências do laboratório =================
@@ -1108,7 +1159,7 @@ function patientFrom(text){
     }
     if (line.trim()) prevNonEmpty = line;
     if (p.sex === null){
-      const m = n.match(/(?:sexo|genero)\s*:?\s*(masculino|feminino|m|f)\b/);
+      const m = n.match(/(?:sexo|genero)\s*:\s*(masculino|feminino|m|f)\b/);   // só o rótulo "Sexo:" — "Sexo Masculino: de 26 a 446" é referência
       if (m) p.sex = m[1][0] === "m" ? "M" : "F";
     }
   }
@@ -1135,7 +1186,8 @@ function qualifiers(n){
   if (isM && !isF) q.sex = "M"; else if (isF && !isM) q.sex = "F";   // "Masculino/Feminino" (cabeçalho de tabela) não define sexo
   if (!q.age && /\b(?:rn|recem[- ]nascidos?|neonatos?)\b/.test(n)){ q.age = [0, 28/365]; q.ageTxt = (n.match(/\b(?:rn|recem[- ]nascidos?|neonatos?)\b/) || [""])[0]; }
   else if (!q.age && /\badult[oa]s?\b/.test(n) && !/crianca/.test(n)){ q.age = [18, Infinity]; q.ageTxt = (n.match(/\badult[oa]s?\b/) || [""])[0]; }
-  if (/gestante|gravidez|trimestre|lactante|hipertens/.test(n)) q.preg = true;   // populações especiais: não valem para o julgamento automático
+  if (/gestante|gravidez|trimestre|lactante|hipertens/.test(n)) q.preg = true;
+  if (/\bentre\s+\d{1,2}\s*(?:h|horas)?\s+e\s+\d{1,2}\s*(?:h|horas)\b|\b\d{1,2}\s*h\s*(?:as|a|-)\s*\d{1,2}\s*h\b/.test(n)) q.preg = true;   // faixa de horário (cortisol): depende da hora da coleta   // populações especiais: não valem para o julgamento automático
   if (/com ou sem jejum/.test(n)) q.fast = "any";
   else if (/com jejum|em jejum/.test(n)) q.fast = "com";
   else if (/sem jejum/.test(n)) q.fast = "sem";
@@ -1156,7 +1208,7 @@ function condition(n){
   return null;
 }
 const NORMAL_LBL = /normal|baixo risco|nao reagente|negativ|desejavel|otimo|adequad|suficiente|saudavel|ausente/;
-const ABN_LBL = /reagente|positiv|risco|diabet|deficien|insuficien|elevad|\balt[oa]\b|limitrofe|indetermin|inconclusiv|reducao|diminuicao|falencia|sugestiv|doenca|toxic|hipo|hiper|pre ?diab|intoleran|muito/;
+const ABN_LBL = /duvidos|alterad|reagente|positiv|risco|diabet|deficien|insuficien|elevad|\balt[oa]\b|limitrofe|indetermin|inconclusiv|reducao|diminuicao|falencia|sugestiv|doenca|toxic|hipo|hiper|pre ?diab|intoleran|muito/;
 function category(label){
   const l = label.replace(/e grupos? de risco\*?/g, "").replace(/populac\w+/g, "");
   if (NORMAL_LBL.test(l)) return "normal";
@@ -1243,6 +1295,8 @@ function judge(it, cls){
     return {flag: base ? dirOf(v, base) : (hitAbn.hi === Infinity ? "alto" : hitAbn.lo === -Infinity ? "baixo" : "alto"), ref:show([hitAbn, ...normal])};
   }
   if (!normal.length) return {flag:null, ref:show(cls)};
+  // várias faixas "normais" sem sobreposição são categorias (ex.: PCR por indicação clínica), não a faixa do paciente
+  if (normal.length >= 2 && normal.every((a, i) => normal.every((b, j) => i === j || disjoint({lo:a.lo, hi:a.hi, loIn:a.loIn, hiIn:a.hiIn}, b)))) return {flag:null, ref:show(normal)};
   if (normal.every(c => inside(v, c))) return {flag:"normal", ref:show(normal)};
   if (normal.every(c => disjoint(v, c))) return {flag:dirOf(v, normal[0]), ref:show(normal)};
   return {flag:null, ref:show(normal)};                   // ex.: TG entre o limite com jejum e o sem jejum
@@ -1261,7 +1315,7 @@ function applyRefs(items, patient){
     const start = h ? line.length - stripName(line.slice(h.len), it.ex).length : 0;
     const b = sameLine ? norm(line) : norm(blankRefs(line));
     let m = null;
-    if (it.ab === "TFG" && /^>/.test(it.v) && !/[>≥]\s*\d/.test(norm(line))){
+    if (GT_OK.has(it.ab) && /^>/.test(it.v) && !/[>≥]\s*\d/.test(norm(line))){
       const mm = /(?:superior a|maior que|maior ou igual a|acima de)\s*\d+(?:[.,]\d+)?/.exec(norm(line));
       if (mm){
         let end = mm.index + mm[0].length;
@@ -1449,8 +1503,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.22-4";
-const BUILD_HASH = "d30015e7bb8aeb80c8a25146148b6c942103f26da4e291dc05ad6f44cee840b5";
+const APP_VERSION = "2026.10.22-5";
+const BUILD_HASH = "f9dd70acf6401fd7fe63d48c9f7977d8f9bb3d5df85dadbb926c966f440fba6c";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
