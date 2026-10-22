@@ -33,6 +33,10 @@ try { const t = localStorage.getItem("linhaExames.theme"); if (t === "light" || 
 .theme{display:inline-flex;margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
 .theme button{border:0;background:var(--surface);color:var(--muted);padding:6px 10px;font:inherit;font-size:.82rem;cursor:pointer}
 .theme button+button{border-left:1px solid var(--line)}
+#upd{position:fixed;left:50%;top:12px;transform:translateX(-50%);max-width:calc(100% - 32px);display:flex;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:.85rem;box-shadow:0 2px 10px rgba(0,0,0,.15);z-index:50}
+#upd[hidden]{display:none}
+#upd button{border:0;border-radius:6px;padding:5px 10px;background:var(--accent);color:var(--accent-ink);font:inherit;cursor:pointer}
+#upd .x{background:transparent;color:var(--muted);padding:5px}
 .theme button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .theme button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 *,*::before,*::after{box-sizing:inherit}
@@ -87,7 +91,7 @@ details.src code{font-family:inherit;color:var(--muted);overflow-wrap:anywhere}
 #out .alt{color:var(--alt);font-weight:700}
 .chip.altered .v{color:var(--alt);font-weight:700}
 .chip.altered{border-color:var(--alt)}
-details.src li .ref{grid-column:2;font-size:.82rem;color:var(--muted)}
+details.src li .ref{grid-column:2;font-size:.82rem;color:var(--muted);overflow-wrap:anywhere;min-width:0}
 details.src li .ref.alt{color:var(--alt)}
 #copy{flex:none;border:0;border-radius:8px;padding:0 18px;background:var(--accent);color:var(--accent-ink);font-weight:650;cursor:pointer;min-width:96px}
 #copy:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
@@ -174,6 +178,23 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
     <label class="wide">Paciente<input id="pname" placeholder="lido do laudo" autocomplete="off"></label>
     <label>Data da coleta<input id="date" placeholder="dd/mm" inputmode="numeric"></label>
     <label>Prefixo<input id="prefix" value="LAB"></label>
+    <label class="wide">Data na linha
+      <select id="dfmt">
+        <option value="paren">LAB (24/09):</option>
+        <option value="plain">LAB 24/09:</option>
+        <option value="bracket">LAB [24/09]:</option>
+        <option value="dash">LAB – 24/09:</option>
+        <option value="de">LAB de 24/09:</option>
+        <option value="yy">LAB (24/09/26):</option>
+        <option value="yyyy">LAB 24/09/2026:</option>
+        <option value="mon">LAB 24/set:</option>
+        <option value="dow">LAB 24/09 (qua):</option>
+        <option value="rel">LAB (ontem, 24/09):</option>
+        <option value="first">24/09 – LAB:</option>
+        <option value="firstparen">(24/09) LAB:</option>
+        <option value="none">LAB: (sem data)</option>
+      </select>
+    </label>
     <label>Idade (anos)<input id="age" inputmode="decimal" placeholder="lida do laudo"></label>
     <label>Sexo
       <select id="sex">
@@ -251,7 +272,9 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
     </div>
     <p class="muted">O relatório de diagnóstico não inclui o nome do paciente. Mande-o quando algum exame sair errado.</p>
     <pre id="testout" hidden></pre>
+    <p class="muted" id="ver">Versão —</p>
   </details>
+  <div id="upd" role="status" hidden><span id="upd-t"></span><button type="button" id="upd-go">Recarregar</button><button type="button" class="x" id="upd-x" aria-label="Fechar">✕</button></div>
 
   <p class="note">Os exames que você desmarca ficam desmarcados nas próximas vezes. Confira sempre os valores no laudo original.</p>
 </div>
@@ -283,6 +306,7 @@ const CATS = {
   heparina:{name:"Gasometria", c:"var(--heparina)"},
   fluoreto:{name:"Glicose", c:"var(--fluoreto)"},
   preto:{name:"VHS", c:"var(--preto)"},
+  u24:{name:"Urina de 24 horas", c:"var(--urina)"},
   urina:{name:"Urina tipo I", c:"var(--urina)", seg:"U1"},
   gram:{name:"Bacterioscópico de urina", c:"var(--gram)", seg:"Gram U"},
   gasoA:{name:"Gasometria arterial", c:"var(--heparina)", seg:"Gaso art"},
@@ -321,7 +345,7 @@ const EX = [
   ["HbA1c","edta","hemoglobina glicada|hemoglobina glicosilada|hba1c|a1c"],
   ["Ur","soro","ureia|ur"],
   ["Cr","soro","creatinina|cr"],
-  ["TFG","soro","e?gfr|tfg ?e?|taxa de filtracao glomerular(?: estimada)?|clearance estimado"],
+  ["TFG","soro","(?:(?:estimativa da )?(?:taxa|ritmo) de filtracao glomerular|filtracao glomerular|e?gfr|e?tfg ?e?|rfg ?e?|clearance (?:de creatinina )?estimado)(?: estimad[ao]| calculad[ao])?(?:\\s*\\(?\\s*e?(?:tfg|rfg|gfr)e?\\s*\\)?)?(?:[ ,\\-–:]*\\(?\\s*(?:ckd ?-? ?epi|mdrd|cockcroft(?:[ -]gault)?)(?:\\s*(?:versao\\s*)?20\\d\\d)?\\s*\\)?)?"],
   ["Na","soro","sodio|na"],
   ["K","soro","potassio|k"],
   ["Cl","soro","cloreto|cloro|cl"],
@@ -330,8 +354,8 @@ const EX = [
   ["CaI","soro","calcio ionico|calcio ionizado|ca ionico|cai"],
   ["P","soro","fosforo|fosfato"],
   ["AU","soro","acido urico"],
-  ["TGO","soro","tgo|ast|aspartato aminotransferase|transaminase oxalacetica"],
-  ["TGP","soro","tgp|alt|alanina aminotransferase|transaminase piruvica"],
+  ["TGO","soro","tgo|ast|aspartato amino ?transferase|transaminase (?:glutamico ?-? ?)?oxalacetica"],
+  ["TGP","soro","tgp|alt|alanina amino ?transferase|transaminase (?:glutamico ?-? ?)?piruvica"],
   ["GGT","soro","gama ?gt|ggt|gama ?glutamil ?transferase|gamaglutamiltransferase"],
   ["FA","soro","fosfatase alcalina|fa"],
   ["BT","soro","bilirrubina total|bt"],
@@ -341,6 +365,12 @@ const EX = [
   ["Alb","soro","albumina"],
   ["Glob","soro","globulinas?"],
   ["A/G","soro","(?:razao|relacao) (?:albumina ?/ ?globulina|a ?/ ?g)"],
+  ["_a1","soro","alfa ?-? ?1(?: ?-? ?globulinas?)?"],
+  ["_a2","soro","alfa ?-? ?2(?: ?-? ?globulinas?)?"],
+  ["_b1","soro","beta ?-? ?1(?: ?-? ?globulinas?)?"],
+  ["_b2","soro","beta ?-? ?2(?: ?-? ?globulinas?)?"],
+  ["_bt","soro","beta(?: ?-? ?globulinas?)?"],
+  ["_g","soro","gama(?: ?-? ?globulinas?)?"],
   ["Amil","soro","amilase"],
   ["Lip","soro","lipase"],
   ["LDH","soro","ldh|desidrogenase latica|lactato desidrogenase|desidrogenase lactica"],
@@ -351,11 +381,12 @@ const EX = [
   ["PCT","soro","procalcitonina"],
   ["CT","soro","colesterol total|ct"],
   ["HDL","soro","hdl(?: colesterol)?|colesterol hdl"],
+  ["Não-HDL","soro","nao ?-? ?hdl(?: ?-? ?colesterol)?|colesterol nao ?-? ?hdl"],
   ["LDL","soro","ldl(?: colesterol)?|colesterol ldl"],
   ["VLDL","soro","vldl(?: colesterol)?|colesterol vldl"],
   ["TG","soro","triglicerides|triglicerideos|tg"],
-  ["TSH","soro","tsh|hormonio tireoestimulante"],
-  ["T4L","soro","t4 livre|t4l"],
+  ["TSH","soro","tsh|hormonio tir(?:e|eo)?oestimulante|hormonio estimulante da tireoide"],
+  ["T4L","soro","t4 livre|t4l|tiroxina (?:\\(t4\\) )?livre|tiroxina livre"],
   ["T3","soro","t3(?: total)?|triiodotironina"],
   ["T3L","soro","t3 livre|t3l|triiodotironina livre"],
   ["Anti-TPO","soro","anticorpos? anti ?-? ?(?:tpo|peroxidase)|anti ?-? ?(?:tpo|peroxidase)"],
@@ -397,6 +428,10 @@ const EX = [
   ["BE","heparina","be|excesso de bases?|base excess"],
   ["SatO2","heparina","sat ?o2|so2|saturacao(?: de o2| de oxigenio)?"],
   ["Lac","heparina","lactato|acido latico|acido lactico"],
+  ["Metanefrinas totais","u24","metanefrinas (?:urinarias )?totais"],
+  ["Metanefrina","u24","metanefrina(?: livre)?"],
+  ["Normetanefrina","u24","normetanefrinas?(?: livre)?"],
+  ["Vol 24h","u24","volume urinario(?: de 24 ?h(?:oras)?| em 24 ?h(?:oras)?)?|volume de 24 ?h(?:oras)?"],
   ["Gli","fluoreto","glicose(?: de jejum| plasmatica| serica)?|glicemia(?: de jejum)?"],
   ["GME","fluoreto","glicose media estimada|\\(?gme\\)?|\\(?eag\\)?"],
   ["VHS","preto","vhs|velocidade de hemossedimentacao"],
@@ -459,6 +494,9 @@ const GASO_NAMES = [
 ];
 const EXGA = GASO_NAMES.map(([ab, src]) => mk([ab, "gasoA", src]));
 const EXGV = GASO_NAMES.map(([ab, src]) => mk([ab, "gasoV", src]));
+// Bloco "BILIRRUBINAS" com linhas "DIRETA : 0,12", "INDIRETA: 0,28", "TOTAL : 0,40"
+const EXBIL = [...[["BD","soro","diretas?"],["BI","soro","indiretas?"],["BT","soro","total"]].map(mk), ...EX];
+const BIL_HDR = /^\s*bilirrubinas?\b(?!\s*(?:total|direta|indireta|conjugada))/;
 const ALL = [...EX, ...EXU, ...EXG, ...EXGA, ...EXGV];
 const GASO_A_HDR = /^\s*gaso(?:metria)?\s*(?:arterial|art\b)/;
 const GASO_V_HDR = /^\s*gaso(?:metria)?\s*(?:venosa|ven\b)/;
@@ -494,16 +532,42 @@ function pick(nums, ex, diffMode){
   }
   return nums[0].v;
 }
+// Datas de coleta do laudo: "Coleta: 13/10/2026", "Coleta (02/10/2026", ou "Coleta:" numa linha e a data na seguinte.
+// Se houver coletas em dias diferentes, vale a mais recente (e o app avisa).
+function coletas(text){
+  const lines = text.split(/\r?\n/), out = [];
+  let prev = "", prev2 = "";
+  for (const line of lines){
+    const re = /(\d{2})\/(\d{2})(?:\/(\d{2,4}))?/g; let m;
+    while ((m = re.exec(line))){
+      const before = norm(line.slice(Math.max(0, m.index - 40), m.index));
+      const atStart = !line.slice(0, m.index).trim();
+      if (/nasc|emiss|liber|impress|entrada|cadastro|assinatura/.test(before)) continue;
+      if (/colet|colhid|data da ficha/.test(before) || (atStart && (/colet\w*\s*(?:em)?\s*:?\s*$|^data da ficha\s*:?$/.test(prev) || (/^data da ficha\s*:?$/.test(prev2) && /^\d{5,}$/.test(prev))))){
+        let y = m[3] ? +m[3] : null; if (y !== null && y < 100) y += 2000;
+        out.push({d:m[1], m:m[2], y});
+      }
+    }
+    if (line.trim()){ prev2 = prev; prev = norm(line).trim(); }
+  }
+  return out;
+}
+function lastColeta(text){
+  const cs = coletas(text); if (!cs.length) return null;
+  const yr = cs.find(c => c.y)?.y || new Date().getFullYear();
+  const key = c => (c.y || yr) * 10000 + +c.m * 100 + +c.d;
+  return cs.reduce((a, c) => key(c) > key(a) ? c : a);
+}
 // Data da coleta com ano (AAAA-MM-DD), para ordenar o histórico
 function findDateFull(text){
+  const c = lastColeta(text);
+  if (c && c.y) return c.y + "-" + c.m + "-" + c.d;
   const re = /(\d{2})\/(\d{2})\/(\d{4})/g; let m, first = null;
   while ((m = re.exec(text))){
     const ls = text.lastIndexOf("\n", m.index) + 1;
     const before = norm(text.slice(Math.max(ls, m.index - 40), m.index));
     if (/nasc|emiss|liber|impress|assinatura|a partir|alterad|publicac/.test(before)) continue;
-    const d = m[3] + "-" + m[2] + "-" + m[1];
-    if (/colet|colhid/.test(before)) return d;
-    if (!first) first = d;
+    if (!first) first = m[3] + "-" + m[2] + "-" + m[1];
   }
   return first;
 }
@@ -512,9 +576,13 @@ function detectFormat(text){
   if (/cientificalab|cientifica lab|exames assinados eletronicamente/.test(n) && /data assinatura/.test(n)) return "Científica Lab";
   if (/autenticidade\s*:/.test(n) && /liberado em\s*\(/.test(n)) return "Matrix (Lab. de Saúde Pública)";
   if (/\bafip\b/.test(n) || (/liberado por/.test(n) && /\bo\.s\s*:/.test(n) && /valores encontrados|resultado\s/.test(n))) return "AFIP";
+  if (/data da ficha/.test(n) && /liberado em\s*:/.test(n)) return "Fleury (ficha)";
+  if (/dasa\.com\.br|\bdasa\b/.test(n) && /data coleta\/recebimento/.test(n)) return "DASA";
   return "Genérico";
 }
 function findDate(text){
+  const c = lastColeta(text);
+  if (c) return c.d + "/" + c.m;
   const re = /(\d{2})\/(\d{2})(?:\/(\d{2,4}))?/g; let m, first = null;
   while ((m = re.exec(text))){
     const ls = text.lastIndexOf("\n", m.index) + 1;
@@ -626,7 +694,9 @@ function readValue(raw, ex, diffMode, strict){
     return txt && txt.length < 30 ? titleCase(txt) : null;
   }
   if (!/^(?:[<>≤≥]\s?)?-?\d/.test(n)) return null;
-  return pick(numbersIn(t), ex, diffMode);
+  const v = pick(numbersIn(t), ex, diffMode);
+  if (v !== null && /^\d{7,}$/.test(String(v).replace(/^[<>≤≥]\s?/, ""))) return null;   // nº de ficha/pedido, não resultado
+  return v;
 }
 // Fim de um bloco de exame no laudo: descarta nomes que ficaram sem valor
 const BLOCK_END = /^\s*(?:material|data (?:da )?assinatura|liberado|assinad|exames assinados|laudo assinado)/;   // "Material" é fraco (ver parse)
@@ -694,14 +764,64 @@ function parseCulture(c){
   if (ongoing) return {ab, v:"em andamento", flag:null, src};
   return null;
 }
+// "LAUDO EVOLUTIVO" (tabela com resultados antigos e números de ficha): nunca é fonte de valor.
+// A região vai até o fim ou até o próximo bloco normal de exame ("Método:" / "RESULTADO  VALORES DE REFERÊNCIA").
+function evolutiveSpans(lines){
+  const out = [];
+  for (let i = 0; i < lines.length; i++){
+    if (/^\s*resultados? anteriores\s*:?\s*$/.test(norm(lines[i]))){   // "RESULTADOS ANTERIORES: FICHA DATA RESULTADO"
+      let j = i + 1;
+      while (j < lines.length && !/recebido|coletado|liberado|assinatura|assinado|^\s*-{10,}\s*$/.test(norm(lines[j]))
+             && !(/[A-ZÀ-Ú]{4}/.test(lines[j]) && !/\d{2}|:/.test(lines[j]) && matchExam(norm(lines[j]), EX))) j++;
+      out.push([i, j]); i = j - 1; continue;
+    }
+    if (!/^\s*laudo evolutivo\s*$|^\s*(?:historico|evolucao) de resultados\s*$/.test(norm(lines[i]))) continue;
+    let j = i + 1;
+    for (; j < lines.length; j++) if (/^\s*(?:metodo|material)\s*:|^\s*resultado\s+valor(?:es)? de referencia/.test(norm(lines[j]))) break;
+    if (j < lines.length){   // devolve o título do próximo exame (até 2 linhas sem números logo acima)
+      let k = j, back = 0;
+      while (back < 2){ let q = k - 1; while (q > i && !lines[q].trim()) q--; if (q <= i || /\d|^\s*(?:analitos|resultados|valores de referencia|cliente)\b/.test(norm(lines[q]))) break; k = q; back++; }
+      j = k;
+    }
+    out.push([i, j]); i = j - 1;
+  }
+  return out;
+}
+// Teste de tolerância oral à glicose: tabela "AMOSTRA  TEMPO (min)  GLICEMIA" → um item só ("99→177→163→113→116 (0-30-60-90-120')")
+const TOTG_HDR = /^\s*(?:teste (?:de )?tolerancia (?:oral )?(?:a )?glicose|curva glicemica|curva de tolerancia|totg|gtt)\b/;
+function parseTOTG(c){
+  const N = c.lines.map(l => norm(l).replace(/^[\s\-=|]+/, "").trimEnd());
+  let pts = [];
+  for (const n of N){ const m = n.match(/^\d{1,2}\s+(basal|jejum|\d{1,3})(?:\s*min(?:utos)?)?\s+(\d{2,3}(?:[.,]\d)?)$/); if (m) pts.push([m[1], m[2]]); }
+  if (!pts.length){   // colunas separadas: tempos numa lista, glicemias noutra
+    const ti = N.findIndex(x => /^tempo\b/.test(x)), gi = N.findIndex(x => /^glicemia\b/.test(x));
+    if (ti >= 0 && gi > ti){
+      const times = N.slice(ti + 1, gi).map(x => x.trim()).filter(Boolean), vals = [];
+      for (let k = gi + 1; k < N.length; k++){ const x = N[k].trim(); if (/^\d{2,3}(?:[.,]\d)?$/.test(x)) vals.push(x); else if (x) break; }
+      if (times.length >= 2 && times.length === vals.length && times.every(t => /^(?:basal|jejum|\d{1,3})$/.test(t))) pts = times.map((t, k) => [t, vals[k]]);
+    }
+  }
+  if (pts.length < 2) return null;
+  const tmin = t => /basal|jejum/.test(t) ? 0 : +t;
+  const thr = {};
+  for (const n of N){ const m = n.match(/^(jejum|basal|(\d+)\s*min(?:utos)?)\s*\|?\s*(?:menor|inferior|<)\s*(?:que |a )?(\d+)/); if (m && !(tmin(m[2] || m[1]) in thr)) thr[tmin(m[2] || m[1])] = +m[3]; }
+  const judged = pts.filter(([t]) => tmin(t) in thr);
+  const flag = !judged.length ? null : judged.some(([t, v]) => parseFloat(v.replace(",", ".")) >= thr[tmin(t)]) ? "alto" : "normal";
+  const v = pts.map(p => p[1]).join("→") + " (" + pts.map(p => tmin(p[0])).join("-") + "')";
+  const ref = Object.keys(thr).length ? "Normal: " + Object.entries(thr).map(([t, x]) => (+t ? t + "'" : "jejum") + " <" + x).join(", ") : null;
+  return {v, flag, ref, src: c.title + " | " + pts.map(p => p[0] + ": " + p[1]).join(" | ")};
+}
 function parse(text, diffMode){
-  const lines = text.split(/\r?\n/);
+  const lines = text.replace(/\u00ad/g, "-").replace(/[\u00a0\u2007\u202f]/g, " ").split(/\r?\n/);
+  const evo = evolutiveSpans(lines);
+  for (const [a, b] of evo) for (let k = a; k < b; k++) lines[k] = "";
   const found = new Map();
   let pending = [];   // exames cujo nome apareceu sem valor, na ordem em que apareceram
   let list = EX;      // muda para urina/gram dentro desses blocos
   const nameAt = new Map();   // linha onde apareceu o nome de cada exame pendente
   const bounds = new Set();   // linhas que abrem ou fecham um bloco de exame
   const store = (ex, v, src, vi) => {
+    if (!ALL.includes(ex)) ex = ALL.find(e => e.key === ex.key) || ex;   // sinônimo de bloco (bilirrubinas) → exame canônico
     if (found.has(ex.key)){ pending = pending.filter(p => p !== ex); return; }
     const it = {ab:ex.ab, key:ex.key, cat:ex.cat, ex, v, src:src.trim().replace(/\s+/g, " "),
       ni: nameAt.has(ex) ? nameAt.get(ex) : vi, vi, order:ALL.indexOf(ex)};
@@ -721,7 +841,14 @@ function parse(text, diffMode){
   let block = null;
   const closeBlock = () => { if (block && found.size === block.size) missed.push(block.title); block = null; };
   const nextLines = i => { const o = []; for (let j = i + 1; j < lines.length && o.length < 2; j++) if (lines[j].trim()) o.push(norm(lines[j])); return o; };
-  let cult = null, nCult = 0;
+  let cult = null, nCult = 0, totg = null;
+  const closeTotg = () => {
+    if (!totg) return;
+    const r = parseTOTG(totg);
+    if (r) found.set("TOTG", {ab:"TOTG", key:"TOTG", cat:"fluoreto", ex:null, v:r.v, flag0:r.flag, ref0:r.ref, src:r.src, ni:totg.start, vi:totg.start, order:ALL.findIndex(e => e.ab === "Gli")});
+    else missed.push(totg.title);
+    totg = null;
+  };
   let coag = null;   // "TP" ou "TTPA": o "Tempo 11,7 segundos" da AFIP depende do título do bloco
   // Laudo com gráficos de evolução (AFIP): números soltos podem ser eixo ou valor antigo.
   // Nesse caso, número solto só vale quando uma coluna inteira casa com a lista de nomes.
@@ -755,6 +882,12 @@ function parse(text, diffMode){
     if (!line.trim()) continue;
     const n = norm(line);
     const title = line.trim();
+    if (totg){
+      const end = /^\s*(?:recebido|coletado|liberado|data (?:da )?assinatura|assinad|exames assinados)/.test(n)
+        || (title.length <= 70 && /[A-ZÀ-Ú]{4}/.test(title) && !/[a-zà-ú]/.test(title) && matchExam(n, EX) && !/glicose|glicemia|toleranc|diabet|criterio|valores|referencia/.test(n));
+      if (end){ closeTotg(); bounds.add(i); } else { totg.lines.push(line); continue; }
+    }
+    if (TOTG_HDR.test(n) && title.length <= 80 && !totg){ closeBlock(); pending = []; list = EX; bounds.add(i); totg = {title, start:i, lines:[]}; continue; }
     // dentro de uma cultura: junta as linhas até o fim do bloco
     if (cult){
       const strongEnd = /^\s*(?:data (?:da )?assinatura|exames assinados|laudo assinado|assinad)/.test(n);
@@ -770,28 +903,37 @@ function parse(text, diffMode){
     if (GASO_A_HDR.test(n)){ closeBlock(); list = EXGA; pending = []; bounds.add(i); continue; }
     if (GASO_V_HDR.test(n)){ closeBlock(); list = EXGV; pending = []; bounds.add(i); continue; }
     if (title.length <= 70 && /[A-ZÀ-Ú]{3}/.test(title) && !/[a-zà-ú]/.test(title) && !/\d{3}/.test(title) && !/:/.test(title)
-        && !/^(?:DRA?\.|PREFEITURA|SECRETARIA|SEDIMENTO|BIOM|EXAMES ASSINADOS|LAUDO|N[ÃA]O REAGENTE|REAGENTE|NEGATIVO|POSITIVO|AUSENTE|PRESENTE|INDETERMINADO|AMOSTRA|EQUIPE|MULTIPROFISSIONAL|PMSP|RESULTADOS? ANTERIORES)\b/.test(title)
+        && !/^(?:DRA?\.|PREFEITURA|SECRETARIA|SEDIMENTO|BIOM|EXAMES ASSINADOS|LAUDO|N[ÃA]O REAGENTE|REAGENTE|NEGATIVO|POSITIVO|AUSENTE|PRESENTE|INDETERMINADO|AMOSTRA|EQUIPE|MULTIPROFISSIONAL|PMSP|RESULTADOS? ANTERIORES|RESULTADOS?$|VALOR(?:ES)? DE REFER|ANALITOS)\b/.test(title)
         && nextLines(i).some(x => /^resultados?\b|valor(?:es)? de referencia/.test(x))){
       closeBlock(); block = {title, size: found.size}; bounds.add(i);
+      if (list === EXBIL) list = EX;
     }
+    if (list === EX && BIL_HDR.test(n) && !/\d/.test(n)){ list = EXBIL; continue; }
     if (URINE_HDR.test(n)){ list = EXU; pending = []; bounds.add(i); continue; }
     if (GRAM_HDR.test(n)){ list = EXG; pending = []; bounds.add(i); continue; }
     if (!/\d/.test(n)){
       if (/tempo e atividade (?:de )?protrombina|^\s*tempo de protrombina|^\s*protrombina\b/.test(n)) coag = "TP";
       else if (/ttpa|tromboplastina parcial/.test(n)) coag = "TTPA";
     }
+    // "GAMA" numa linha e "GLOBULINAS" na seguinte (colunas separadas): é a mesma fração, não as globulinas totais
+    if (/^\s*globulinas?\s*$/.test(n) && /^\s*(?:alfa|beta|gama)\s*-?\s*[12]?\s*$/.test(prevLine(i))) continue;
     let hit = matchExam(n, list);
     if (!hit && coag && list === EX){ const m = n.match(/^\s*tempo\b/); if (m) hit = {ex: coag === "TP" ? exTP : exTTPA, len: m[0].length}; }
     if (hit && hit.ex.ab === "R TP" && coag === "TTPA") hit = {ex: exRTTPA, len: hit.len};
+    if (hit && hit.len <= 3 && /^\s*[A-Z][a-z]?\s+[a-zà-ú]{3,}/.test(line) && !/^\s*\S+\s+(?:total|ionic|ioniz|seric|livre|urin|plasm)/i.test(norm(line))) hit = null;   // "Na ausência de...": texto, não sódio
     if (hit){
       const ex = hit.ex;
       if (found.has(ex.key)) continue;          // repetição na coluna de referência
       const rest = line.slice(hit.len);
-      const v = rest.trim() ? readValue(rest, ex, diffMode, false) : null;
+      let v = rest.trim() ? readValue(rest, ex, diffMode, false) : null;
+      if (v === null && ex.ab === "TFG"){
+        const m = norm(stripName(rest, ex)).match(/^\s*(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
+        if (m) v = ">" + m[1];
+      }
       if (v !== null) store(ex, v, line, i);
       else if (!/\d|reagente|positivo|negativo|detectad|ausente|presente/.test(norm(stripName(rest, ex)))){
         if (!pending.includes(ex)){ pending.push(ex); nameAt.set(ex, i); }
-        if (chartDoc){ if (seqLast >= 0 && gap(seqLast, i) > 2) seq = []; seq.push(ex); seqLast = i; }
+        if (seqLast >= 0 && gap(seqLast, i) > 2) seq = []; seq.push(ex); seqLast = i;
       }
       // se a linha tinha número mas era faixa de referência ("Albumina: 3,4 a 4,8"), não entra na fila
       continue;
@@ -806,7 +948,10 @@ function parse(text, diffMode){
       } else { closeBlock(); for (const p of pending) if (chartDoc) unresolved.add(p); pending = []; list = EX; coag = null; seq = []; absWait = []; bounds.add(i); }
       continue;
     }
-    if (chartDoc && COLV.test(line) && !/^\s*\d{1,2}\/\d{2}/.test(line)){
+    // sem gráfico, a coluna só é alinhada no leucograma (onde a coluna de % tem um valor a menos que a de absolutos)
+    const colRun = (() => { if (chartDoc || pending.filter(p => p.diff).length < 3 || !COLV.test(line) || /^\s*\d{1,2}\/\d{2}/.test(line)) return 0;
+      let c = 0; for (let j = i; j < lines.length; j++){ if (!lines[j].trim()) continue; if (COLV.test(lines[j]) && !/^\s*\d{1,2}\/\d{2}/.test(lines[j])) c++; else break; } return c; })();
+    if ((chartDoc || colRun >= 2) && COLV.test(line) && !/^\s*\d{1,2}\/\d{2}/.test(line)){
       // junta a coluna de números soltos e só aceita se o tamanho bater com os nomes pendentes
       const run = []; let j = i;
       for (; j < lines.length; j++){ if (!lines[j].trim()) continue; if (COLV.test(lines[j]) && !/^\s*\d{1,2}\/\d{2}/.test(lines[j])) run.push(j); else break; }
@@ -848,6 +993,11 @@ function parse(text, diffMode){
       i = j - 1; continue;
     }
     if (!pending.length) continue;
+    const tfgP = pending.find(p => p.ab === "TFG");
+    if (tfgP){
+      const m = n.match(/^\s*(?:resultados?\s*:?\s*)?(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
+      if (m && (/^\s*resultado/.test(n) || pending[0] === tfgP)){ store(tfgP, ">" + m[1], line, i); continue; }
+    }
     if (chartDoc && !RESULT_INLINE.test(n) && gap(nameAt.get(pending[0]) ?? i, i) > 3) continue;   // longe do nome, num laudo com gráficos: não arrisca
     // "Método: Jaffé sem desproteinização 0,86 mg/dL": a parte do método some e o valor fica
     const nb = norm(blankRefs(line)).trimStart();
@@ -855,9 +1005,19 @@ function parse(text, diffMode){
     const v = readValue(line, pending[0], diffMode, true);
     if (v !== null) store(pending[0], v, line, i);
   }
-  closeCult(); closeBlock();
+  closeCult(); closeTotg(); closeBlock();
+  // "Esse valor de hemoglobina glicada corresponde à glicemia média estimada de 100 mg/dL."
+  if (!found.has("GME") && found.has("HbA1c")){
+    for (let i = 0; i < lines.length; i++){
+      const m = norm(lines[i] + " " + (lines[i + 1] || "")).match(/glicemia media estimada(?:\s*\((?:gme|eag)\))?\s*(?:de|=|:)\s*(\d{2,3})\s*mg/);
+      if (m && /corresponde|equivale|estimada de/.test(norm(lines[i] + " " + (lines[i + 1] || "")))){ const ex = EX.find(e => e.ab === "GME"); store(ex, m[1], lines[i] + " " + (lines[i + 1] || ""), i); break; }
+    }
+  }
   for (const p of [...unresolved, ...(chartDoc ? pending : [])]) if (!found.has(p.key)) missed.push(p.ab + " (valor não localizado com segurança)");
-  const out = [...found.values()].sort((a,b) => a.order - b.order);
+  // frações da eletroforese ("ALFA-1 GLOBULINAS"): só servem para manter a coluna alinhada
+  const hidden = [...found.values()].filter(x => x.ab[0] === "_");
+  const out = [...found.values()].filter(x => x.ab[0] !== "_").sort((a,b) => a.order - b.order);
+  out.hiddenLines = hidden.flatMap(x => [x.ni, x.vi]);
   for (const it of out) it.suspect = implausible(it);
   out.missed = [...new Set(missed)];
   out.lines = lines; out.bounds = bounds;
@@ -896,27 +1056,52 @@ const NOREF = new Set(["GME","LDL","Cor","Aspecto"]);   // GME é calculada; LDL
 function patientFrom(text){
   const p = {age:null, sex:null, name:null};
   // nome: "RA: 123 - NOME SOBRENOME 68 anos" (Científica), "Nome: NOME   SOBRENOME   Cadastro" (Matrix), "Paciente: NOME"
-  const nm = text.match(/\bRA\s*:\s*\d+\s*-\s*([A-ZÀ-Ú][A-ZÀ-Ú' .]+?)\s+\d{1,3}\s*anos/)
+  const nm = text.match(/\bRA\s*:\s*\d+\s*-\s*([A-ZÀ-Ú][A-ZÀ-Ú' .]+?)(?=\s+\d{1,3}\s*anos|\s+Sexo\b|\s*\r?\n|\s*$)/)
     || text.match(/\bNome\s*:\s*([A-Za-zÀ-ú][A-Za-zÀ-ú' .\t]+?)(?=\s+\d|\s+(?:Cadastro|CNS|Sexo|Data|Prontu[aá]rio|Idade|RG|CPF)\b|\s*\r?\n|\s*$)/)
-    || text.match(/\bPaciente\s*:\s*([A-Za-zÀ-ú][A-Za-zÀ-ú' .]+?)(?=\s{2,}|\s+(?:Sexo|Idade|Data|Nasc|RG|CPF|Prontu)|\s*\r?\n|\s*$)/);
+    || text.match(/\b(?:Paciente|Cliente)\s*:[ \t]*([A-Za-zÀ-ú][A-Za-zÀ-ú' .]+?)(?=\s{2,}|\s+(?:Sexo|Idade|Data|Nasc|RG|CPF|Prontu)|\s*\r?\n|\s*$)/);
   if (nm) p.name = nm[1].replace(/\s+/g, " ").trim().toUpperCase();
+  const TL = text.split(/\r?\n/);
+  // rótulos numa coluna e valores noutra (cópia do Chrome): "Cliente:\nData de Nascimento:\nMédico:\nNOME\n20/08/1983 Ficha:"
+  const after = (re, want) => { for (let i = 0; i < TL.length; i++){ if (!re.test(norm(TL[i]))) continue;
+    for (let j = i + 1, c = 0; j < TL.length && c < 5; j++){ if (!TL[j].trim()) continue; c++; const m = TL[j].match(want); if (m) return m; } } return null; };
+  if (!p.name){ const m = after(/^\s*(?:cliente|paciente)\s*:\s*$/, /^\s*([A-ZÀ-Ú][A-ZÀ-Ú' ]{4,60}[A-ZÀ-Ú])\s*$/); if (m) p.name = m[1].replace(/\s+/g, " ").trim(); }
   if (!p.name){ const m = text.match(/(?:^|\n)\s*([A-ZÀ-Ú][A-ZÀ-Ú' ]{5,60}?)\s*\r?\n\s*Nome\s*:\s*\r?\n/); if (m) p.name = m[1].replace(/\s+/g, " ").trim(); }
-  const bd = text.match(/(?:data\s*(?:de\s*)?)?nasc(?:imento|\.)?\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})/i);
-  p.birth = bd ? bd[3] + "-" + bd[2] + "-" + bd[1] : null;
+  const bd = text.match(/(?:(?:data\s*(?:de\s*)?)?nasc(?:imento|\.)?|\bDN)\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})/i);
+  const bd2 = bd ? null : after(/^\s*data (?:de )?nascimento\s*:?\s*$/, /^\s*(\d{2})\/(\d{2})\/(\d{4})(?!\d)/);
+  const bb = bd || (bd2 ? [null, bd2[1], bd2[2], bd2[3]] : null);
+  p.birth = bb ? bb[3] + "-" + bb[2] + "-" + bb[1] : null;
   // identidade para o histórico: primeiro nome + nascimento (o nome às vezes vem cortado na cópia)
   p.key = p.name ? (p.birth ? p.name.split(" ")[0] + "|" + p.birth : p.name) : null;
+  // IDADE, em ordem de confiança:
+  // 1) data de nascimento + data da coleta (não depende do formato do cabeçalho)
+  // 2) idade escrita no cabeçalho ("Idade: 67 anos", "RA: ... 68 anos 11 meses", "24/10/2007|18a")
+  // Nunca de texto de referência ("válida para pacientes acima de 18 anos", "a partir de 18 anos").
+  const REFLIKE = /acima d|abaixo d|a partir d|maiores d|menores d|apos |ate |entre |faixa|referenc|valid|equac|individuo|recomend|idade \(anos\)/;
+  if (p.birth){
+    const c = lastColeta(text), dc = c && c.y ? new Date(c.y, +c.m - 1, +c.d) : null;
+    const ref = dc || (findDateFull(text) ? new Date(findDateFull(text) + "T12:00:00") : null);
+    const b = new Date(p.birth + "T12:00:00");
+    if (ref && ref > b){
+      let y = ref.getFullYear() - b.getFullYear();
+      let mo = ref.getMonth() - b.getMonth() - (ref.getDate() < b.getDate() ? 1 : 0);
+      if (mo < 0){ y--; mo += 12; }
+      if (y >= 0 && y < 130) p.age = y + mo / 12;
+    }
+  }
   let prevNonEmpty = "";
   for (const line of text.split(/\r?\n/)){
     const n = norm(line);
-    if (p.age === null && /sexo|^ra\s*:|paciente|idade|nascimento/.test(n)){
-      // "59 anos 2 meses" (Científica) ou "24/10/2007|18a" (Matrix)
-      const m = n.match(/(\d{1,3})\s*anos?(?:\s+(\d{1,2})\s*mes(?:es)?)?/) || n.match(/\|\s*(\d{1,3})\s*a\b()/);
+    if (p.age === null && !REFLIKE.test(n)){
+      let m = null;
+      if (/\bidade\s*:?/.test(n)) m = n.match(/\bidade\s*:?\s*(\d{1,3})\s*(?:anos?|a)\b(?:\s+(\d{1,2})\s*m)?/);
+      if (!m && /^\s*ra\s*:/.test(n)) m = n.match(/(\d{1,3})\s*anos?(?:\s+(\d{1,2})\s*mes(?:es)?)?/);
+      if (!m && /nasc/.test(n)) m = n.match(/\|\s*(\d{1,3})\s*a\b()/) || n.match(/nasc[^|]*?\d{4}\D{1,6}(\d{1,3})\s*anos?\b()/);
+      if (!m && /^\s*\d{1,3}\s*anos?\b/.test(n) && /^\s*(?:idade\s*:?|ra\s*:.*)\s*$/i.test(norm(prevNonEmpty))) m = n.match(/(\d{1,3})\s*anos?(?:\s+(\d{1,2})\s*mes(?:es)?)?/);
       if (m) p.age = +m[1] + (m[2] ? +m[2] / 12 : 0);
     }
-    if (p.age === null && /^\s*\d{1,3}\s*anos?\s*$/.test(n) && /idade\s*:\s*$/i.test(prevNonEmpty)) p.age = +n.match(/\d+/)[0];   // "Idade:" e "67 anos" em linhas separadas
     if (line.trim()) prevNonEmpty = line;
     if (p.sex === null){
-      const m = n.match(/sexo\s*:?\s*(masculino|feminino|m|f)\b/);
+      const m = n.match(/(?:sexo|genero)\s*:?\s*(masculino|feminino|m|f)\b/);
       if (m) p.sex = m[1][0] === "m" ? "M" : "F";
     }
   }
@@ -934,7 +1119,7 @@ function qualifiers(n){
   if ((m = new RegExp("(\\d+(?:[.,]\\d+)?)\\s*"+AGEU+"?\\s*(?:a|ate|-)\\s*(\\d+(?:[.,]\\d+)?)\\s*"+AGEU).exec(n))){
     const u1 = m[2] || m[4];
     q.age = [toYears(nb(m[1]), u1), toYears(nb(m[3]) + 1, m[4])]; q.ageTxt = m[0];
-  } else if ((m = new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|maiores de|apos)\\s*(\\d+)\\s*"+AGEU).exec(n))){
+  } else if ((m = new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|maiores de|apos|maior(?:es)? ou igual a|igual ou (?:maior|superior) a|≥|>=)\\s*(\\d+)\\s*"+AGEU).exec(n))){
     q.age = [toYears(+m[1], m[2]), Infinity]; q.ageTxt = m[0];
   } else if ((m = new RegExp("(?:abaixo d[eo]s?|menores de|ate)\\s*(\\d+)\\s*"+AGEU).exec(n))){
     q.age = [0, toYears(+m[1], m[2])]; q.ageTxt = m[0];
@@ -943,7 +1128,7 @@ function qualifiers(n){
   if (isM && !isF) q.sex = "M"; else if (isF && !isM) q.sex = "F";   // "Masculino/Feminino" (cabeçalho de tabela) não define sexo
   if (!q.age && /\b(?:rn|recem[- ]nascidos?|neonatos?)\b/.test(n)){ q.age = [0, 28/365]; q.ageTxt = (n.match(/\b(?:rn|recem[- ]nascidos?|neonatos?)\b/) || [""])[0]; }
   else if (!q.age && /\badult[oa]s?\b/.test(n) && !/crianca/.test(n)){ q.age = [18, Infinity]; q.ageTxt = (n.match(/\badult[oa]s?\b/) || [""])[0]; }
-  if (/gestante|gravidez|trimestre|lactante/.test(n)) q.preg = true;
+  if (/gestante|gravidez|trimestre|lactante|hipertens/.test(n)) q.preg = true;   // populações especiais: não valem para o julgamento automático
   if (/com ou sem jejum/.test(n)) q.fast = "any";
   else if (/com jejum|em jejum/.test(n)) q.fast = "com";
   else if (/sem jejum/.test(n)) q.fast = "sem";
@@ -956,14 +1141,14 @@ function condition(n){
   const c = (lo, hi, loIn, hiIn, at) => ({lo, hi, loIn, hiIn, at});
   if ((m = new RegExp("(?:igual ou superior a|maior ou igual a|≥|>=)\\s*"+NUMR).exec(n))) return c(nb(m[1]), Infinity, true, false, m.index + m[0].length);
   if ((m = new RegExp("(?:igual ou inferior a|menor ou igual a|≤|<=)\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, true, m.index + m[0].length);
-  if ((m = new RegExp("(?:^|\\s)(?:de\\s+)?"+NUMR+"\\s*(?:a|ate|-|–)\\s*"+NUMR+"(?![\\d])").exec(n))) return c(nb(m[1]), nb(m[2]), true, true, m.index + m[0].length);
+  if ((m = new RegExp("(?:^|\\s)(?:de\\s+)?"+NUMR+"\\s*(?:a|ate|-|–)\\s*"+NUMR+"(?![\\d])").exec(n))){ if (nb(m[1]) > nb(m[2])) return null; return c(nb(m[1]), nb(m[2]), true, true, m.index + m[0].length); }
   if ((m = new RegExp("(?:superior a|maior que|maior de|acima de|>)\\s*"+NUMR).exec(n))) return c(nb(m[1]), Infinity, false, false, m.index + m[0].length);
   if ((m = new RegExp("(?:inferior a|menor que|menor de|abaixo de|<)\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, false, m.index + m[0].length);
   if ((m = new RegExp("(?:^|\\s)ate\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, true, m.index + m[0].length);
   if ((m = /\b(ausentes?|negativ[oa]s?|nao reagente|nao detectad[oa]|indetectavel|raras|raros|tracos)\b/.exec(n))) return {qual:true, at:m.index + m[0].length};
   return null;
 }
-const NORMAL_LBL = /normal|nao reagente|negativ|desejavel|otimo|adequad|suficiente|saudavel|ausente/;
+const NORMAL_LBL = /normal|baixo risco|nao reagente|negativ|desejavel|otimo|adequad|suficiente|saudavel|ausente/;
 const ABN_LBL = /reagente|positiv|risco|diabet|deficien|insuficien|elevad|\balt[oa]\b|limitrofe|indetermin|inconclusiv|reducao|diminuicao|falencia|sugestiv|doenca|toxic|hipo|hiper|pre ?diab|intoleran|muito/;
 function category(label){
   const l = label.replace(/e grupos? de risco\*?/g, "").replace(/populac\w+/g, "");
@@ -974,11 +1159,13 @@ function category(label){
 const PROSE = /^\s*(?:nota|notas|referencia|referencias|bibliografia|obs|para |conforme|esta |\*|¹|\(|valores |exame executado|um pequeno|alguns autores|https?|atualizacao|material|metodo|data |dra?\.|biomedic|crbm|resultado|valor de referencia\s*[-–:]?\s*(?:$|[-–]))/;
 // Divide uma linha em trechos "rótulo: condição" e devolve as cláusulas de referência
 function clausesOf(line, li){
+  line = line.replace(/(\d)\s?a(\s*):/g, "$1 anos$2:");   // "Acima de 20 a:", "21 - 50 a:" (a = anos)
   const n = norm(line);
   if (!n.trim() || PROSE.test(n) || n.trim().length > 120) return [];
   if ((n.match(/\)/g) || []).length > (n.match(/\(/g) || []).length) return [];
   if (/\b(?:sugere|devem?|podem?|estiverem|apresentam|recomenda|considerad|interpreta|provavelmente|observad)/.test(n)) return [];   // texto corrido
   if (/terapeutic|anticoagul|sangramento|\bmeta\b|\balvo\b/.test(n)) return [];
+  if (/\b(?:avenida|av\.|rua|alameda|rodovia|cep|telefone|fone|cnpj|pagina|impresso em|autenticidade|hash|token|assinatura digital)\b|\b\d{5}\s*-\s*\d{3}\b|[0-9a-f]{20,}/.test(n)) return [];   // endereço, CEP, rodapé, códigos de autenticação
   if (/\d+-\d+-\d+|\b\d{4,}\s*-\s*\d{4,}\b|\b\d{6,}\b/.test(n)) return [];   // números de pedido/OS ("7128-67856-27"), não faixas   // faixa terapêutica do INR, metas: não são referência
   // citações: "2011; 34(suppl 1)", "J Urol. 1996 Apr;155(4):1336-9" (um ano sem unidade depois)
   if (/\b(?:19|20)\d{2}\b(?!\s*(?:[a-zµ%]*\/|%|[a-zµ]+\/))|et al|doi|\d\s*\(\d+\)\s*:/.test(n)) return [];
@@ -1004,7 +1191,9 @@ function clausesOf(line, li){
     const label = (full.replace(fq.ageTxt || "\u0000", " ").match(/^([^:]*?):/) || [,""])[1];
     const after = (lab ? body.slice(body.indexOf(":") + 1) : body).slice(cond.at);
     const um = after.match(UNIT_TOK);
-    out.push({...cond, li, q:fq, cat:category(label), label, unit: um ? normUnit(um[1]) : null,
+    // categoria depois da faixa: "Menor que 5,7% - baixo risco de ...", "5,7 a 6,4% - risco aumentado"
+    const tail = label.trim() ? null : (after.match(/^\s*(?:%|[a-zµ]*\/[a-z0-9]+)?\s*[-–]\s*([a-z][a-z ,]{3,80}?)\s*\*?\s*$/) || [])[1];
+    out.push({...cond, li, q:fq, cat:category(tail || label), label, unit: um ? normUnit(um[1]) : null,
               txt: line.slice(pos[k] - (full.length - seg.length) < 0 ? 0 : pos[k], pos[k+1] ?? line.length).trim(), ctxOnly:false});
   }
   if (carry.trim() && !out.length){
@@ -1065,6 +1254,16 @@ function applyRefs(items, patient){
     const start = h ? line.length - stripName(line.slice(h.len), it.ex).length : 0;
     const b = sameLine ? norm(line) : norm(blankRefs(line));
     let m = null;
+    if (it.ab === "TFG" && /^>/.test(it.v) && !/[>≥]\s*\d/.test(norm(line))){
+      const mm = /(?:superior a|maior que|maior ou igual a|acima de)\s*\d+(?:[.,]\d+)?/.exec(norm(line));
+      if (mm){
+        let end = mm.index + mm[0].length;
+        const um = L[it.vi].slice(end).match(UNIT_TOK); it.unit = um ? normUnit(um[1]) : null; if (um) end += um[0].length;
+        blank(it.vi, 0, end);
+        if (it.ni !== it.vi){ const h2 = matchExam(norm(L[it.ni]), [it.ex]); if (h2) blank(it.ni, 0, h2.len); }
+        continue;
+      }
+    }
     if (/\d/.test(it.v)){
       const num = it.v.replace(/^[<>≤≥]/, "").replace(/[.]/g, "\\.").split(" ")[0];
       const cmp = /^[<>≤≥]/.test(it.v) ? "[" + it.v[0] + "]\\s*" : "";
@@ -1079,6 +1278,8 @@ function applyRefs(items, patient){
     const um = L[it.vi].slice(end).match(UNIT_TOK);
     it.unit = um ? normUnit(um[1]) : null;
     if (um) end += um[0].length;
+    const pc = L[it.vi].slice(end).match(/^\s*\(\s*\d+(?:[.,]\d+)?\s*%?\s*\)/);   // "4,23 (58.8)": % da eletroforese ao lado do valor
+    if (pc) end += pc[0].length;
     blank(it.vi, sameLine ? 0 : m.index, end);
     if (it.ni !== it.vi){ const h2 = matchExam(norm(L[it.ni]), [it.ex]); if (h2) blank(it.ni, 0, h2.len); }
   }
@@ -1097,7 +1298,8 @@ function applyRefs(items, patient){
     let ctx = {}, ageTable = false;
     const all = [];
     const nameLines = new Set();
-    for (let li = s; li < e; li++) if (matchExam(norm(lines[li]), ALL)) nameLines.add(li);
+    // cabeçalho de lista de referência ("Estimativa da Taxa de Filtração Glomerular, eTFG:") não conta como nome de exame
+    for (let li = s; li < e; li++) if (matchExam(norm(lines[li]), ALL) && !(/:\s*$/.test(lines[li]) && !/\d/.test(lines[li]) && !its.some(x => x.ni === li || x.vi === li))) nameLines.add(li);
     for (let li = s; li < e; li++){
       let ln = L[li].replace(/\((dias|meses|anos)\)/gi, "$1");
       if (/idade\s*\(anos\)/i.test(lines[li])) ageTable = true;
@@ -1113,11 +1315,16 @@ function applyRefs(items, patient){
         all.push(c);
       }
     }
-    const refable = its.filter(x => x.cat !== "cult" && !NOREF.has(x.ab) && (!CATS[x.cat].seg || ["urina","gasoA","gasoV"].includes(x.cat)));
+    const refable = its.filter(x => x.ex && x.cat !== "cult" && !NOREF.has(x.ab) && (!CATS[x.cat].seg || ["urina","gasoA","gasoV"].includes(x.cat)));
     const own = new Map(refable.map(x => [x, []]));
     const free = [];
     for (const c of all){
       const byLabel = refable.filter(x => c.label && x.ex.re.test(c.label.trim()));
+      // linha de dados de outro analito ("ALFA-1 GLOBULINAS : 0,30 (4.2) 0,22 a 0,43"): rótulo + valor próprio + faixa
+      if (!byLabel.length && !refable.some(x => x.vi === c.li || x.ni === c.li) && c.label && c.label.trim() && c.cat === null && !c.q.age && !c.q.sex && !c.q.fast){
+        const nums = (norm(c.txt).split(":").slice(1).join(":").match(/-?\d+(?:[.,]\d+)?/g) || []).map(nb);
+        if (nums.length >= 3 && nums[0] !== c.lo) continue;
+      }
       const byLine = refable.filter(x => x.vi === c.li || x.ni === c.li);
       const byUnit = c.unit ? refable.filter(x => x.unit && x.unit === c.unit) : [];
       const tgt = byLabel.length === 1 ? byLabel[0] : byLine.length === 1 ? byLine[0] : refable.length === 1 ? refable[0] : byUnit.length === 1 ? byUnit[0] : null;
@@ -1141,7 +1348,7 @@ function applyRefs(items, patient){
       run.forEach((x, j) => { if (fl[j] !== undefined) own.get(x).push(...free.filter(c => c.li === fl[j])); });
     });
     // 4b) nome / valor / referência em linhas próprias: a única linha de referência entre o valor e o próximo exame é dele
-    const marks = [...new Set([...refable.flatMap(x => [x.ni, x.vi]), ...nameLines])].sort((a,b) => a - b);
+    const marks = [...new Set([...refable.flatMap(x => [x.ni, x.vi]), ...nameLines, ...(items.hiddenLines || []).filter(li => li > s && li < e)])].sort((a,b) => a - b);
     for (const x of refable.filter(x => !own.get(x).length)){
       const nm = marks.find(m => m > x.vi), next = nm ?? e;
       const ls = [...new Set(free.filter(c => c.li > x.vi && c.li < next).map(c => c.li))];
@@ -1207,7 +1414,7 @@ function runEmbeddedTests(){
   const lines = []; let fail = 0;
   for (const t of EMBED_TESTS){
     const r = parse(t.text, "pct"), p = patientFrom(t.text);
-    for (const it of r){ it.flag = it.flag0 || null; it.ref = null; }
+    for (const it of r){ it.flag = it.flag0 || null; it.ref = it.ref0 || null; }
     applyRefs(r, p); if (t.defaults) applyDefaults(r, p);
     const got = r.map(fmt), miss = t.expect.filter(x => !got.includes(x)), extra = got.filter(x => !t.expect.includes(x));
     const ok = !miss.length && !extra.length && !r.missed.length;
@@ -1220,15 +1427,57 @@ function runEmbeddedTests(){
   return {lines, fail, total: EMBED_TESTS.length};
 }
 // PARSER-END
-const PAGE_SRC = "<!DOCTYPE html>\n" + document.documentElement.outerHTML.replace(/^<html([^>]*?) data-theme="[^"]*"/, "<html$1");
+// Cópia do app para uso offline: só o código do próprio app (sem scripts que a página publicada receba de fora)
+const PAGE_SRC = (() => {
+  const c = document.documentElement.cloneNode(true);
+  c.removeAttribute("data-theme");
+  c.querySelectorAll("script").forEach(sc => { if (sc.src || !/linhaExames/.test(sc.textContent)) sc.remove(); });
+  return "<!DOCTYPE html>\n" + c.outerHTML;
+})();
 
 const $ = id => document.getElementById(id);
 const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
-let state = {off:[], prefix:"LAB", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:false, upper:false, defaults:false, hist:true};
+// ================= Versão e impressão digital =================
+// APP_VERSION: AAAA.MM.DD-n (ordem cronológica). BUILD_HASH: SHA-256 deste arquivo com o próprio BUILD_HASH zerado,
+// gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
+const APP_VERSION = "2026.10.22-1";
+const BUILD_HASH = "7e239c0b57def5d54ca3b14d2808c48482474434668295702036f05a23af3b07";
+const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
+const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
+async function sha256Hex(txt){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+async function checkVersion(){
+  const base = "Versão " + APP_VERSION + " · impressão digital " + fingerprint(BUILD_HASH);
+  $("ver").textContent = base + " · integridade: verificando…";
+  let txt = null;
+  try {
+    if (/^https?:$/.test(location.protocol)){
+      const r = await fetch(location.href.split("#")[0], {cache:"no-store"});
+      if (r.ok) txt = await r.text();
+    }
+  } catch(e){}
+  const sv = txt && (txt.match(/const APP_VERSION = "([^"]+)";/) || [])[1];
+  if (!sv){ $("ver").textContent = base + " · integridade: não verificável aqui (arquivo local ou visualização)"; return; }
+  if (verKey(sv) > verKey(APP_VERSION)){
+    $("ver").textContent = base + " · há uma versão mais nova no servidor: " + sv;
+    $("upd-t").textContent = "Versão nova disponível (" + sv + ").";
+    $("upd").hidden = false;
+    return;
+  }
+  if (sv !== APP_VERSION){ $("ver").textContent = base + " · servidor com versão diferente: " + sv; return; }
+  let ok = false;
+  try { ok = (await sha256Hex(txt.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2"))) === BUILD_HASH; } catch(e){}
+  $("ver").textContent = base + " · integridade: " + (ok ? "verificada (é a versão publicada)" : "FALHOU — arquivo servido não confere com a impressão digital");
+}
+$("upd-go").addEventListener("click", () => location.reload());
+$("upd-x").addEventListener("click", () => { $("upd").hidden = true; });
+let state = {off:[], prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:false, upper:false, defaults:false, hist:true};
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch(e){}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} };
 
-$("prefix").value = state.prefix; $("sep").value = state.sep; $("diff").value = state.diff; $("mark").value = state.mark;
+$("prefix").value = state.prefix; $("dfmt").value = state.dfmt; $("sep").value = state.sep; $("diff").value = state.diff; $("mark").value = state.mark;
 const OPTS = {prev:"o-prev", compact:"o-compact", group:"o-group", upper:"o-upper", defaults:"o-defaults", hist:"o-hist"};
 for (const [k, id] of Object.entries(OPTS)) $(id).checked = !!state[k];
 
@@ -1265,7 +1514,7 @@ function judgeAll(){
   const pf = items.patientFound || {};
   const age = isNaN(a) ? null : (pf.age !== null && pf.age !== undefined && Math.floor(pf.age) === a ? pf.age : a);
   const pt = {age, sex: $("sex").value || null};
-  for (const it of items){ it.flag = it.flag0 || null; it.ref = null; it.refDefault = false; }
+  for (const it of items){ it.flag = it.flag0 || null; it.ref = it.ref0 || null; it.refDefault = false; }
   if (items.length) applyRefs(items, pt);
   // LDL: a referência do laudo depende do risco cardiovascular; aqui vale o seu limite fixo
   for (const it of items){
@@ -1417,7 +1666,9 @@ function render(){
   const al = $("alerts"); al.innerHTML = "";
   const sus = items.filter(x => x.suspect), miss = items.missed || [];
   const noPt = hasText && items.length && (!$("age").value.trim() || !$("sex").value);
-  if (hasText && (sus.length || miss.length || noPt)){
+  const days = hasText ? [...new Set(coletas($("src").value).map(c => c.d + "/" + c.m))] : [];
+  const multi = days.length > 1;
+  if (hasText && (sus.length || miss.length || noPt || multi)){
     const d = document.createElement("div"); d.className = "alert"; d.setAttribute("role", "status");
     if (sus.length){
       const p = document.createElement("p");
@@ -1429,6 +1680,12 @@ function render(){
       const p = document.createElement("p");
       p.innerHTML = "<strong>Não reconhecidos:</strong> ";
       p.append(miss.join(", ") + ". " + (miss.length === 1 ? "Esse exame não entrou" : "Esses exames não entraram") + " na linha.");
+      d.append(p);
+    }
+    if (multi){
+      const p = document.createElement("p");
+      p.innerHTML = "<strong>Coletas em datas diferentes:</strong> ";
+      p.append(days.join(", ") + ". A linha usa a mais recente; corrija a data acima se preferir outra.");
       d.append(p);
     }
     if (noPt){
@@ -1519,10 +1776,65 @@ function buildLine(sel){
   }
   return parts.join(esc(state.sep));
 }
+// ---------- data no início da linha ----------
+const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const SEMANA = ["dom","seg","ter","qua","qui","sex","sáb"];
+// Lê o campo "Data da coleta" (dd/mm, dd/mm/aa ou dd/mm/aaaa); o ano vem do campo, do laudo ou do calendário
+function coletaDate(txt){
+  const m = (txt || "").match(/^\s*(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*$/);
+  if (!m) return null;
+  const d = +m[1], mo = +m[2];
+  if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+  let y = m[3] ? +m[3] : null;
+  if (y !== null && y < 100) y += 2000;
+  if (y === null && patient.dateFull && +patient.dateFull.slice(8, 10) === d && +patient.dateFull.slice(5, 7) === mo) y = +patient.dateFull.slice(0, 4);
+  if (y === null){ const now = new Date(); y = now.getFullYear(); if (new Date(y, mo - 1, d) - now > 7 * 864e5) y--; }
+  return new Date(y, mo - 1, d, 12);
+}
+function relDay(dt){
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const n = Math.round((today - dt) / 864e5);
+  return n === 0 ? "hoje" : n === 1 ? "ontem" : n === 2 ? "anteontem" : n > 2 && n <= 30 ? "há " + n + " dias" : n === -1 ? "amanhã" : null;
+}
+function formatHead(prefix, dateTxt, fmt){
+  const P = (prefix || "").trim();
+  const dt = coletaDate(dateTxt);
+  const raw = (dateTxt || "").trim();
+  if (!raw || fmt === "none") return P;
+  const p2 = n => String(n).padStart(2, "0");
+  const dm = dt ? p2(dt.getDate()) + "/" + p2(dt.getMonth() + 1) : raw;
+  let D;
+  switch (fmt){
+    case "yy":   D = dt ? dm + "/" + String(dt.getFullYear()).slice(2) : raw; break;
+    case "yyyy": D = dt ? dm + "/" + dt.getFullYear() : raw; break;
+    case "mon":  D = dt ? dt.getDate() + "/" + MESES[dt.getMonth()] : raw; break;
+    case "dow":  D = dt ? dm + " (" + SEMANA[dt.getDay()] + ")" : raw; break;
+    case "rel":  { const r = dt && relDay(dt); D = r ? r + ", " + dm : dm; break; }
+    default:     D = dm;
+  }
+  const join = (...xs) => xs.filter(Boolean).join(" ");
+  switch (fmt){
+    case "plain": case "yyyy": case "mon": case "dow": return join(P, D);
+    case "bracket": return join(P, "[" + D + "]");
+    case "dash":  return P ? P + " – " + D : D;
+    case "de":    return P ? P + " de " + D : D;
+    case "first": return P ? D + " – " + P : D;
+    case "firstparen": return join("(" + D + ")", P);
+    default:      return join(P, "(" + D + ")");   // paren, yy, rel
+  }
+}
+// As opções do seletor mostram como fica com o seu prefixo e a data do laudo
+function updateDateOptions(){
+  const sample = $("date").value.trim() || (() => { const t = new Date(); t.setDate(t.getDate() - 1); return String(t.getDate()).padStart(2, "0") + "/" + String(t.getMonth() + 1).padStart(2, "0"); })();
+  for (const o of $("dfmt").options){
+    const h = formatHead(state.prefix, sample, o.value);
+    o.textContent = (h ? h + ":" : ":") + (o.value === "none" ? " (sem data)" : "");
+  }
+}
 function output(){
   const sel = items.filter(isOn);
-  const date = $("date").value.trim();
-  const head = [state.prefix.trim(), date ? "(" + date + ")" : ""].filter(Boolean).join(" ");
+  const head = formatHead(state.prefix, $("date").value, state.dfmt);
+  updateDateOptions();
   const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const h = state.upper ? head.toUpperCase() : head;
   $("out").innerHTML = sel.length ? (h ? esc(h) + ": " : "") + buildLine(sel) : "";
@@ -1533,6 +1845,7 @@ function output(){
 let t;
 $("src").addEventListener("input", () => { clearTimeout(t); t = setTimeout(extract, 200); });
 $("date").addEventListener("input", output);
+$("dfmt").addEventListener("change", e => { state.dfmt = e.target.value; save(); output(); });
 $("filter").addEventListener("input", render);
 $("pname").addEventListener("change", () => { const n = $("pname").value.trim().toUpperCase(); if (n){ patient.name = n; patient.key = patient.birth ? n.split(" ")[0] + "|" + patient.birth : n; judgeAll(); render(); scheduleSave(); } });
 $("prefix").addEventListener("input", e => { state.prefix = e.target.value; save(); output(); });
@@ -1601,14 +1914,22 @@ $("copy").addEventListener("click", async () => {
 });
 
 // ---------- ferramentas ----------
-$("dl").addEventListener("click", () => {
+$("dl").addEventListener("click", async () => {
+  // na página publicada no Claude, o download passa pela confirmação da plataforma
+  const dls = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads").catch(() => null) : null;
+  if (dls){
+    try { await dls.save({filename: "linha-de-exames.html", data: PAGE_SRC}); $("dl").textContent = "Arquivo salvo"; }
+    catch(e){ $("dl").textContent = e && e.code === "declined" ? "Download cancelado" : "Download indisponível aqui"; }
+    setTimeout(() => $("dl").textContent = "Baixar para uso offline", 2500);
+    return;
+  }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([PAGE_SRC], {type:"text/html"}));
   a.download = "linha-de-exames.html"; document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 });
 $("diag").addEventListener("click", async () => {
-  const r = ["RELATÓRIO DE DIAGNÓSTICO — Linha de exames", "Gerado em: " + new Date().toLocaleString("pt-BR"),
+  const r = ["RELATÓRIO DE DIAGNÓSTICO — Linha de exames", "Gerado em: " + new Date().toLocaleString("pt-BR"), "Versão: " + APP_VERSION + " (" + fingerprint(BUILD_HASH) + ")",
     "Formato: " + ($("fmt").textContent.replace("Formato reconhecido: ", "") || "—"),
     "Idade: " + ($("age").value || "—") + " | Sexo: " + ($("sex").value || "—") + " | Coleta: " + ($("date").value || "—"),
     "Opções: " + JSON.stringify({mark:state.mark, diff:state.diff, prev:state.prev, compact:state.compact, group:state.group, defaults:state.defaults}), "",
@@ -1622,6 +1943,7 @@ $("diag").addEventListener("click", async () => {
   $("diag").textContent = ok ? "Relatório copiado" : "Não foi possível copiar";
   setTimeout(() => $("diag").textContent = "Copiar relatório de diagnóstico", 2500);
 });
+checkVersion();
 $("selftest").addEventListener("click", () => {
   const out = $("testout"); out.hidden = false;
   const res = runEmbeddedTests();
