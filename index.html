@@ -93,7 +93,12 @@ details.src code{font-family:inherit;color:var(--muted);overflow-wrap:anywhere}
 .chip.altered{border-color:var(--alt)}
 details.src li .ref{grid-column:2;font-size:.82rem;color:var(--muted);overflow-wrap:anywhere;min-width:0}
 details.src li .ref.alt{color:var(--alt)}
-#copy{flex:none;border:0;border-radius:8px;padding:0 18px;background:var(--accent);color:var(--accent-ink);font-weight:650;cursor:pointer;min-width:96px}
+.act{flex:none;display:flex;flex-direction:column;gap:6px;width:96px}
+.upt{display:flex;align-items:center;justify-content:center;gap:4px;min-height:26px;padding:0 4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);font-size:.62rem;font-weight:650;letter-spacing:.02em;white-space:nowrap;cursor:pointer;user-select:none}
+.upt input{margin:0;width:13px;height:13px;accent-color:var(--accent)}
+.upt:has(input:checked){border-color:var(--accent);color:var(--accent)}
+.upt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+#copy{flex:1;min-height:32px;border:0;border-radius:8px;padding:0 18px;background:var(--accent);color:var(--accent-ink);font-weight:650;cursor:pointer}
 #copy:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 #copy:disabled{opacity:.45;cursor:default}
 .note{font-size:.8rem;color:var(--muted);margin-top:28px}
@@ -233,7 +238,6 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
     <label class="check"><input type="checkbox" id="o-prev"> <b class="t">Mostrar o valor anterior do mesmo paciente</b> <span>CT 245↑ (ant. 220)</span></label>
     <label class="check"><input type="checkbox" id="o-compact"> <b class="t">Urina e gasometria só com os alterados</b> <span>U1: Bact &gt;20.000↑, demais s/a</span></label>
     <label class="check"><input type="checkbox" id="o-group"> <b class="t">Agrupar frações</b> <span>BT 1,2 (BD 0,3, BI 0,9) · PTN 6,9 (Alb 4,5, Glob 2,4)</span></label>
-    <label class="check"><input type="checkbox" id="o-upper"> <b class="t">Linha toda em maiúsculas</b></label>
     <label class="check"><input type="checkbox" id="o-defaults"> <b class="t">Usar referências padrão do app quando o laudo não trouxer</b> <span>sempre indicadas como "padrão do app"</span></label>
     <label class="check"><input type="checkbox" id="o-hist"> <b class="t">Guardar histórico neste aparelho</b> <span>fica só neste navegador</span></label>
   </details>
@@ -292,7 +296,10 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
 <div class="out">
   <div class="out-in">
     <div id="out" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Linha pronta para copiar" data-placeholder="A linha formatada aparece aqui"></div>
-    <button id="copy" type="button" disabled>Copiar</button>
+    <div class="act">
+      <button id="copy" type="button" disabled>Copiar</button>
+      <label class="upt" title="Linha toda em maiúsculas"><input type="checkbox" id="o-upper"><span>MAIÚSCULAS</span></label>
+    </div>
   </div>
 </div>
 
@@ -1442,8 +1449,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.22-2";
-const BUILD_HASH = "d7e8f923e7afe30655c9c2d3aa46ef4fba32cb12985ae9c07831e76ab5618791";
+const APP_VERSION = "2026.10.22-3";
+const BUILD_HASH = "831ad0ca26f8a485fab56d05adbd94765f04b5c5b981fbdc929e57483a7d74f4";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
