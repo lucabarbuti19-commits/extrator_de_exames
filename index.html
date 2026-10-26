@@ -486,7 +486,7 @@ const EX = [
   ["pCO2","heparina","pco2|p co2|pressao parcial de co2"],
   ["pO2","heparina","po2|p o2|pressao parcial de o2"],
   ["HCO3","heparina","hco3-?|bicarbonato(?: padrao| real)?"],
-  ["BE","heparina","be|excesso de bases?|base excess"],
+  ["BE","heparina","be|excesso de bases?|base excess?o?|base exces"],
   ["SatO2","heparina","sat ?o2|so2|saturacao(?: de o2| de oxigenio)?"],
   ["Lac","heparina","lactato|acido latico|acido lactico"],
   ["Metanefrinas totais","u24","metanefrinas (?:urinarias )?totais"],
@@ -549,7 +549,7 @@ const EXG = [
 // Gasometria com bloco "arterial" ou "venosa": os valores vão para um grupo próprio ("Gaso art: pH 7,32, ...")
 const GASO_NAMES = [
   ["pH","ph"], ["pCO2","pco2|p co2|pressao parcial de co2"], ["pO2","po2|p o2|pressao parcial de o2"],
-  ["HCO3","hco3-?|bicarbonato(?: padrao| real)?"], ["BE","be|excesso de bases?|base excess"],
+  ["HCO3","hco3-?|bicarbonato(?: padrao| real)?"], ["BE","be|excesso de bases?|base excess?o?|base exces"],
   ["SatO2","sat ?o2|so2|saturacao(?: de o2| de oxigenio)?"], ["Lac","lactato(?: arterial| venoso)?|acido latico|acido lactico"],
   ["Na","sodio|na"], ["K","potassio|k"], ["Cl","cloreto|cloro|cl"], ["CaI","calcio ionico|calcio ionizado|ca ionico|cai"],
   ["Gli","glicose|glicemia"], ["Hb","hemoglobina|hb"]
@@ -1267,7 +1267,7 @@ function category(label){
   if (ABN_LBL.test(l)) return "abn";
   return null;
 }
-const PROSE = /^\s*(?:nota|notas|referencia|referencias|bibliografia|obs|para |conforme|esta |\*|¹|\(|valores |exame executado|um pequeno|alguns autores|https?|atualizacao|material|metodo|data |dra?\.|biomedic|crbm|resultado|valor de referencia\s*[-–:]?\s*(?:$|[-–]))/;
+const PROSE = /^\s*(?:nota|notas|referencia|referencias|bibliografia|obs|para |conforme|esta |\*|¹|\(|valores |exame executado|um pequeno|alguns autores|https?|atualizacao|material|metodo|data |dra?\.|biomedic|crbm|resultado|valor de referencia\s*[-–:]?\s*(?:$|[-–](?!\s*\d)))/;
 // Divide uma linha em trechos "rótulo: condição" e devolve as cláusulas de referência
 function clausesOf(line, li){
   line = line.replace(/(\d)\s?a(\s*):/g, "$1 anos$2:");   // "Acima de 20 a:", "21 - 50 a:" (a = anos)
@@ -1667,8 +1667,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.25-1";
-const BUILD_HASH = "cbf040708dd07bdcdd49ebc07b47e9227793dbad146487515e291894eec3b74f";
+const APP_VERSION = "2026.10.25-2";
+const BUILD_HASH = "a34d5aef70e4abe5f50dd7208ef423b00d7e8ca875517718bee76109b534aadb";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
