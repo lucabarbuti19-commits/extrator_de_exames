@@ -434,7 +434,7 @@ const EX = [
   ["_g","soro","gama(?: ?-? ?globulinas?)?"],
   ["Amil","soro","amilase"],
   ["Lip","soro","lipase"],
-  ["LDH","soro","ldh|desidrogenase latica|lactato desidrogenase|desidrogenase lactica"],
+  ["LDH","soro","ldh|dhl|desidrogenase latica|lactato desidrogenase|desidrogenase lactica"],
   ["CPK","soro","cpk|ck|creatinoquinase|creatina ?quinase|creatinofosfoquinase"],
   ["CKMB","soro","ck-? ?mb|cpk-? ?mb"],
   ["Trop","soro","troponina(?: [it])?(?: ultrassensivel| us| hs)?"],
@@ -723,7 +723,7 @@ function urineLT(raw, ex){
 }
 function readValue(raw, ex, diffMode, strict){
   let t = stripName(raw, ex);
-  let n = norm(t).replace(/^resultados?\s*[:\-]?\s*/, "");
+  let n = norm(t).replace(/^resultados?\s*[:\-]?\s*/, "").replace(/^(?:primeira|1\s*[aª°o]\.?)\s*hora\s*:?\s*/, "");   // VHS: "Primeira hora 4 mm/h"
   t = t.slice(t.length - n.length);
   if (/^(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*\s*(?:a|-|–|ate)\s*\d/.test(n)) return null; // linha que começa com faixa é referência
   // número seguido de ":" ";" ")" é citação ou tabela ("40: 78-89)", "2011; 34"), não resultado
@@ -1229,15 +1229,16 @@ function qualifiers(n){
   if ((m = new RegExp("(\\d+(?:[.,]\\d+)?)\\s*"+AGEU+"?\\s*(?:a|ate|-)\\s*(\\d+(?:[.,]\\d+)?)\\s*"+AGEU).exec(n))){
     const u1 = m[2] || m[4];
     q.age = [toYears(nb(m[1]), u1), toYears(nb(m[3]) + 1, m[4])]; q.ageTxt = m[0];
-  } else if ((m = new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|maiores de|apos|maior(?:es)? ou igual a|igual ou (?:maior|superior) a|≥|>=)\\s*(\\d+)\\s*"+AGEU).exec(n))){
+  } else if ((m = new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|maiores de|apos|maior(?:es)? ou igual a|igual ou (?:maior|superior) a|≥|>=?)\\s*(\\d+)\\s*"+AGEU).exec(n))){
     q.age = [toYears(+m[1], m[2]), Infinity]; q.ageTxt = m[0];
-  } else if ((m = new RegExp("(?:abaixo d[eo]s?|menores de|ate)\\s*(\\d+)\\s*"+AGEU).exec(n))){
+  } else if ((m = new RegExp("(?:abaixo d[eo]s?|menores de|ate|≤|<=?)\\s*(\\d+)\\s*"+AGEU).exec(n))){
     q.age = [0, toYears(+m[1], m[2])]; q.ageTxt = m[0];
   }
   const isM = /\b(?:homens?|homem|masculino|sexo masculino)\b/.test(n), isF = /\b(?:mulheres?|feminino|sexo feminino)\b/.test(n);
   if (isM && !isF) q.sex = "M"; else if (isF && !isM) q.sex = "F";   // "Masculino/Feminino" (cabeçalho de tabela) não define sexo
   if (!q.age && /\b(?:rn|recem[- ]nascidos?|neonatos?)\b/.test(n)){ q.age = [0, 28/365]; q.ageTxt = (n.match(/\b(?:rn|recem[- ]nascidos?|neonatos?)\b/) || [""])[0]; }
   else if (!q.age && /\badult[oa]s?\b/.test(n) && !/crianca/.test(n)){ q.age = [18, Infinity]; q.ageTxt = (n.match(/\badult[oa]s?\b/) || [""])[0]; }
+  else if (!q.age && /\bcriancas?\b/.test(n) && !/adult/.test(n)){ q.age = [0, 12]; q.ageTxt = (n.match(/\bcriancas?\b/) || [""])[0]; }   // VHS: "Criancas 0 - 10"
   if (/gestante|gravidez|trimestre|lactante|hipertens/.test(n)) q.preg = true;
   if (/\bentre\s+\d{1,2}\s*(?:h|horas)?\s+e\s+\d{1,2}\s*(?:h|horas)\b|\b\d{1,2}\s*h\s*(?:as|a|-)\s*\d{1,2}\s*h\b/.test(n)) q.preg = true;   // faixa de horário (cortisol): depende da hora da coleta   // populações especiais: não valem para o julgamento automático
   if (/com ou sem jejum/.test(n)) q.fast = "any";
@@ -1284,7 +1285,7 @@ function clausesOf(line, li){
   const cuts = new Set([0]); let m;
   // faixas etárias inteiras ("0 a 3 meses", "1 mês a 18 anos", "A partir de 19 anos") não podem ser cortadas no meio
   const ages = [];
-  const ag = new RegExp("(^|\\s)((?:(?:populacao )?(?:saudavel )?(?:a partir d[eo]s?|acima d[eo]s?|abaixo d[eo]s?|maiores de|menores de)\\s*)?\\d+(?:[.,]\\d+)?\\s*(?:"+AGEU+"\\s*)?(?:(?:a|ate|-)\\s*\\d+(?:[.,]\\d+)?\\s*)?"+AGEU+")\\b", "g");
+  const ag = new RegExp("(^|\\s)((?:(?:populacao )?(?:saudavel )?(?:a partir d[eo]s?|acima d[eo]s?|abaixo d[eo]s?|maiores de|menores de|[<>≤≥]=?)\\s*)?\\d+(?:[.,]\\d+)?\\s*(?:"+AGEU+"\\s*)?(?:(?:a|ate|-)\\s*\\d+(?:[.,]\\d+)?\\s*)?"+AGEU+")\\b", "g");
   while ((m = ag.exec(n))){ const a = m.index + m[1].length; ages.push([a, a + m[2].length]); cuts.add(a); }
   const lbl = /(^|\s)([a-z*][a-z ()*\/.\-]*?)\s*:/g;
   while ((m = lbl.exec(n))){ const a = m.index + m[1].length; if (!ages.some(([x, y]) => a > x && a < y)) cuts.add(a); }
@@ -1667,8 +1668,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.25-2";
-const BUILD_HASH = "a34d5aef70e4abe5f50dd7208ef423b00d7e8ca875517718bee76109b534aadb";
+const APP_VERSION = "2026.10.25-3";
+const BUILD_HASH = "cf10777aaac3bd15bf98a044000bd2c7a62cf54b144ef07fd5e8046e5b6354b5";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
