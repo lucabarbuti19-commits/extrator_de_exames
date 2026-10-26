@@ -1771,8 +1771,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.26-2";
-const BUILD_HASH = "dfda51fdce60f0271026489973e7f3831b8d614c6cc92caab93e9eaba3e9622c";
+const APP_VERSION = "2026.10.26-3";
+const BUILD_HASH = "848b679460d06fbf8ee4c2ffda877f0adb20892e851a99e37f2fb47514c20bab";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -1806,8 +1806,9 @@ async function checkVersion(){
 }
 $("upd-go").addEventListener("click", () => location.reload());
 $("upd-x").addEventListener("click", () => { $("upd").hidden = true; });
-let state = {off:[], prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:false, upper:false, defaults:false, hist:true, escLine:false};
+let state = {off:[], prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:true, upper:false, defaults:false, hist:true, escLine:false};
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch(e){}
+state.group = true;   // "Agrupar frações" sempre começa ligado (pode ser desligado durante o uso)
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} };
 
 $("prefix").value = state.prefix; $("dfmt").value = state.dfmt; $("sep").value = state.sep; $("diff").value = state.diff; $("mark").value = state.mark;
