@@ -475,11 +475,11 @@ const EX = [
   ["BNP","soro","bnp"],
   ["NT-proBNP","soro","nt ?-? ?pro ?-? ?bnp"],
   ["TP","citrato","tp|tempo de protrombina"],
+  ["R TP","citrato","relacao (?:paciente ?/ ?normal|do tp|tp|normatizada)|r\\.? ?tp"],
   ["AP","citrato","atividade de protrombina|atividade"],
   ["INR","citrato","inr|rni"],
-  ["R TP","citrato","relacao (?:paciente ?/ ?normal|do tp|tp|normatizada)|r\\.? ?tp"],
-  ["R TTPA","citrato","relacao (?:do )?ttpa|r\\.? ?ttpa"],
   ["TTPA","citrato","ttpa|tempo de tromboplastina parcial ativad[ao]|kptt|aptt"],
+  ["R TTPA","citrato","relacao (?:do )?ttpa|r\\.? ?ttpa"],
   ["Fib","citrato","fibrinogenio"],
   ["DD","citrato","d ?-? ?dimero|dimero d"],
   ["pH","heparina","ph"],
@@ -665,7 +665,7 @@ function matchExam(n, list){
   return best ? {ex:best, len} : null;
 }
 // Linhas de cabeçalho/rodapé que aparecem entre o nome do exame e o valor
-const LABEL = /^\s*(?:resultados?|valor(?:es)? de referencia|referencia|material|metodo|metodologia|unidade|nota|obs|amostra|data|liberado|assinad|dra?\.?\s|biomedic|crbm|crf|crm|sedimento)/;
+const LABEL = /^\s*(?:resultados?|valor(?:es)? de referencia|referencia|material|metodo|metodologia|unidade|nota|obs|amostra|data|liberado|assinad|dra?\.?\s|biomedic|crbm|crf|crm|sedimento|solicitante|requisitante|pedido|paciente\s*:|prontuario|leito|o\.\s?s\.?\s*:|convenio|medico\s*:|out na)/;   // cabeçalho de página nunca é resultado ("Solicitante: 251931")
 const QUAL = [
   [/^nao reagente/,"NR"],[/^reagente/,"R"],
   [/^nao detectad[oa]s?|^indetectave(?:l|is)/,"ND"],[/^detectad[oa]s?/,"Det"],
@@ -770,6 +770,7 @@ function readValue(raw, ex, diffMode, strict){
 }
 // Fim de um bloco de exame no laudo: descarta nomes que ficaram sem valor
 const BLOCK_END = /^\s*(?:material|data (?:da )?assinatura|liberado|assinad|exames assinados|laudo assinado|recebido\/coletado|recebido em|coletado em)/;   // "Material" é fraco (ver parse)
+const HDR_ALONE = /^\s*(?:solicitante|requisitante|pedido|paciente|prontuario|leito|o\.\s?s\.?|convenio|medico|data nasc\.?|data entrada|unidade)\s*:?\s*$/;
 const RESULT_INLINE = /^\s*resultados?\s*[:\-]?\s*(?:[<>≤≥]?\s?-?\d|nao|reag|neg|pos|det|indet|aus|pres)/;
 // Lê um bloco de cultura: crescimento negativo, microrganismo, contagem de colônias e antibiograma (S/I/R)
 const GENERA = "escherichia|klebsiella|proteus|enterobacter|citrobacter|serratia|morganella|providencia|pseudomonas|acinetobacter|stenotrophomonas|burkholderia|staphylococcus|streptococcus|enterococcus|corynebacterium|listeria|haemophilus|moraxella|neisseria|salmonella|shigella|candida|cryptococcus|aspergillus|clostridioides|clostridium|bacteroides|mycobacterium|micrococcus|bacillus|aeromonas|raoultella|hafnia";
@@ -1111,6 +1112,7 @@ function parse(text, diffMode){
     // "Método: Jaffé sem desproteinização 0,86 mg/dL": a parte do método some e o valor fica
     const nb = norm(blankRefs(line)).trimStart();
     if (!nb || (LABEL.test(nb) && !RESULT_INLINE.test(nb))) continue;
+    if (HDR_ALONE.test(prevLine(i))) continue;   // "Solicitante:" numa linha e "251931 - Fulana" na seguinte: é cabeçalho, não resultado
     const v = readValue(line, pending[0], diffMode, true);
     if (v !== null) store(pending[0], v, line, i);
   }
@@ -1668,8 +1670,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.25-3";
-const BUILD_HASH = "cf10777aaac3bd15bf98a044000bd2c7a62cf54b144ef07fd5e8046e5b6354b5";
+const APP_VERSION = "2026.10.26-1";
+const BUILD_HASH = "609bd34668098712834435843387162148f17ba2efd51311616a5e25ca4b051e";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -2051,13 +2053,14 @@ function updateScores(){
 }
 $("o-escline").addEventListener("change", e => { state.escLine = e.target.checked; save(); output(); });
 // Monta a linha: exames um a um; urina, gram e gasometria em blocos; frações agrupadas e valor anterior conforme as opções
+const LINE_AB = {"R TP":"R", "R TTPA":"R"};   // na linha, a relação sai só como "R", logo depois do TP/TTPA
 function buildLine(sel){
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const up = s => state.upper ? s.toUpperCase() : s;
   const red = state.mark === "both" || state.mark === "red", arr = state.mark === "both" || state.mark === "arrow", star = state.mark === "star";
   const prevTxt = x => state.prev && x.prev && String(x.prev.v) !== String(x.v) ? " (ant. " + x.prev.v + ")" : "";
   const one = x => {
-    const t = esc(up(x.ab + " " + x.v + (arr ? arrow(x) : "") + (star && isAlt(x) ? "*" : "") + prevTxt(x)));
+    const t = esc(up((LINE_AB[x.ab] || x.ab) + " " + x.v + (arr ? arrow(x) : "") + (star && isAlt(x) ? "*" : "") + prevTxt(x)));
     return red && isAlt(x) ? '<span class="alt">' + t + "</span>" : t;
   };
   const plain = sel.filter(x => !CATS[x.cat].seg);
