@@ -33,6 +33,49 @@ try { const t = localStorage.getItem("linhaExames.theme"); if (t === "light" || 
 .theme{display:inline-flex;margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
 .theme button{border:0;background:var(--surface);color:var(--muted);padding:6px 10px;font:inherit;font-size:.82rem;cursor:pointer}
 .theme button+button{border-left:1px solid var(--line)}
+details.escd{margin-top:30px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 14px}
+details.escd>summary{list-style:none;cursor:pointer;padding:12px 0;display:flex;align-items:center;gap:10px}
+details.escd>summary::-webkit-details-marker{display:none}
+details.escd>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.esc-t{font-weight:650;font-size:1.05rem;flex:none}
+.esc-sum{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.esc-sum span{padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.esc-sum span b{font-weight:700}
+.esc-sum span.al{color:var(--alt);border-color:var(--alt)}
+.esc-sum span.pend{color:var(--muted);border-style:dashed}
+.esc-chev{flex:none;color:var(--muted);transition:transform .15s}
+details.escd[open] .esc-chev{transform:rotate(180deg)}
+.esc-in{padding-bottom:14px}
+.esc-h{display:flex;justify-content:flex-end}
+.sw{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);cursor:pointer;position:relative}
+.sw input{position:absolute;opacity:0;width:34px;height:20px;margin:0;cursor:pointer}
+.sw i{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;display:inline-block;transition:background .15s}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);transition:left .15s}
+.sw input:checked+i{background:var(--accent)}
+.sw input:checked+i::after{left:16px}
+.sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
+.esc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px;margin-top:10px}
+.sc{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:12px;min-width:0}
+.sc.wait{border-style:dashed}
+.sc-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sc-nm{font-weight:650}
+.sc-vl{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sc-vl small{font-size:.8rem;font-weight:500;color:var(--muted)}
+.sc-pill{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:650;background:var(--bg);border:1px solid var(--line)}
+.sc-pill.al{color:var(--alt);border-color:var(--alt)}
+.sc-pill[hidden],.sc-miss:empty{display:none}
+.sc-ins{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:8px;font-size:.8rem;color:var(--muted)}
+.sc-ins b{color:var(--ink);font-weight:600}
+.sc-ask{margin-top:10px;display:grid;gap:7px}
+.sc-q{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem}
+.sc-sg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:none}
+.sc-sg label{position:relative;padding:4px 9px;font-size:.78rem;font-weight:650;color:var(--muted);white-space:nowrap;cursor:pointer}
+.sc-sg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.sc-sg label:has(input:checked){background:var(--accent);color:var(--accent-ink)}
+.sc-sg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.sc-num{width:72px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit;font-size:.85rem;text-align:right}
+.sc-miss{margin-top:8px;font-size:.78rem;color:var(--muted)}
+.esc-note{margin:10px 0 0;font-size:.78rem;color:var(--muted)}
 #upd{position:fixed;left:50%;top:12px;transform:translateX(-50%);max-width:calc(100% - 32px);display:flex;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:.85rem;box-shadow:0 2px 10px rgba(0,0,0,.15);z-index:50}
 #upd[hidden]{display:none}
 #upd button{border:0;border-radius:6px;padding:5px 10px;background:var(--accent);color:var(--accent-ink);font:inherit;cursor:pointer}
@@ -256,6 +299,15 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
   <div id="alerts"></div>
   <div id="found"></div>
   <details class="src" id="srcbox" hidden><summary>Ver de onde veio cada valor</summary><ul id="srclist"></ul></details>
+
+  <details class="escd" id="escd" hidden>
+    <summary><span class="esc-t">Escores</span><span class="esc-sum" id="esc-sum"></span><span class="esc-chev" aria-hidden="true">▾</span></summary>
+    <div class="esc-in">
+      <div class="esc-h"><label class="sw"><input type="checkbox" id="o-escline"><i aria-hidden="true"></i>Incluir na linha</label></div>
+      <div class="esc-grid" id="esc-grid"></div>
+      <p class="esc-note">Calculados pelo app com os valores do laudo e o que você marcar. Confira antes de usar.</p>
+    </div>
+  </details>
 
   <section class="hist" id="histbox">
     <div class="hist-head">
@@ -1487,6 +1539,118 @@ function runEmbeddedTests(){
   }
   return {lines, fail, total: EMBED_TESTS.length};
 }
+// ================= Escores (calculados pelo app a partir dos exames lidos) =================
+// Fontes: CKD-EPI 2021 (Inker, NEJM 2021); MELD 3.0 (Kim, Gastroenterology 2021); FIB-4 (Sterling, Hepatology 2006);
+// Child-Pugh (Pugh 1973, versão com INR); Framingham 2008 (D'Agostino, Circulation 2008 — risco CV geral em 10 anos).
+// Só calcula com valores lidos com segurança (sem "<"/">", sem valor fora do possível) e nas unidades esperadas.
+const SC_INPUT_DEFAULT = {dial:false, ascite:null, ence:null, pas:null, has:null, tab:null, dm:null};
+function scoreInputs(items){
+  const val = (ab, ok) => {
+    const it = items.find(x => x.ab === ab && x.cat !== "urina" && !String(x.cat).startsWith("gaso"));
+    if (!it || it.suspect || /[<>≤≥]/.test(String(it.v))) return null;
+    const x = toNum(it.v);
+    if (x === null || !(x > 0)) return null;
+    if (ok && !ok(x, it)) return null;
+    return {x, it};
+  };
+  const notU = u => it => !it.unit || !/umol|µmol|μmol/.test(it.unit);
+  const cr = val("Cr", (x, it) => notU()(it) && x < 25);
+  const plt = val("Plaq");
+  let pltK = null;
+  if (plt){ pltK = plt.x >= 1000 ? plt.x / 1000 : plt.x; if (pltK < 1 || pltK > 2000) pltK = null; }   // ×10³/mm³ = ×10⁹/L
+  return {
+    cr: cr && cr.x, ast: val("TGO") && val("TGO").x, alt: val("TGP") && val("TGP").x, plt: pltK,
+    bt: val("BT", x => x < 60) && val("BT").x, inr: val("INR", x => x < 15) && val("INR").x,
+    na: val("Na", x => x > 90 && x < 200) && val("Na").x, alb: val("Alb", x => x < 10) && val("Alb").x,
+    ct: val("CT", x => x > 40 && x < 1000) && val("CT").x, hdl: val("HDL", x => x > 5 && x < 300) && val("HDL").x
+  };
+}
+const fmtN = (x, d) => x.toFixed(d).replace(".", ",");
+function ckdEpi2021(cr, age, female){
+  const k = female ? 0.7 : 0.9, a = female ? -0.241 : -0.302, r = cr / k;
+  return 142 * Math.pow(Math.min(r, 1), a) * Math.pow(Math.max(r, 1), -1.2) * Math.pow(0.9938, age) * (female ? 1.012 : 1);
+}
+function meld3(o){
+  const cl = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+  const bt = Math.max(1, o.bt), inr = Math.max(1, o.inr), cr = o.dial ? 3 : cl(o.cr, 1, 3), na = cl(o.na, 125, 137), alb = cl(o.alb, 1.5, 3.5);
+  return (o.female ? 1.33 : 0) + 4.56 * Math.log(bt) + 0.82 * (137 - na) - 0.24 * (137 - na) * Math.log(bt)
+       + 9.09 * Math.log(inr) + 11.14 * Math.log(cr) + 1.85 * (3.5 - alb) - 1.83 * (3.5 - alb) * Math.log(cr) + 6;
+}
+function fib4(age, ast, alt, plt){ return age * ast / (plt * Math.sqrt(alt)); }
+function childPugh(o){
+  const p = (x, lo, hi, inv) => inv ? (x > hi ? 1 : x >= lo ? 2 : 3) : (x < lo ? 1 : x <= hi ? 2 : 3);
+  const pts = p(o.bt, 2, 3) + p(o.alb, 2.8, 3.5, true) + p(o.inr, 1.7, 2.3) + o.ascite + o.ence;
+  return {pts, cls: pts <= 6 ? "A" : pts <= 9 ? "B" : "C"};
+}
+function framingham2008(o){
+  const M = {age:3.06117, tc:1.12370, hdl:-0.93263, sbp:1.93303, sbpT:1.99881, smk:0.65451, dm:0.57367, mean:23.9802, s0:0.88936};
+  const F = {age:2.32888, tc:1.20904, hdl:-0.70833, sbp:2.76157, sbpT:2.82263, smk:0.52873, dm:0.69154, mean:26.1931, s0:0.95012};
+  const c = o.female ? F : M;
+  const sum = c.age * Math.log(o.age) + c.tc * Math.log(o.ct) + c.hdl * Math.log(o.hdl) + (o.has ? c.sbpT : c.sbp) * Math.log(o.pas)
+            + (o.tab ? c.smk : 0) + (o.dm ? c.dm : 0);
+  return 100 * (1 - Math.pow(c.s0, Math.exp(sum - c.mean)));
+}
+// Monta os escores aplicáveis: cada um traz valores usados, o que falta, resultado e texto para a linha
+function computeScores(items, pt, inp){
+  const v = scoreInputs(items), out = [];
+  const age = pt.age === null || pt.age === undefined || isNaN(pt.age) ? null : Math.floor(pt.age);
+  const sex = pt.sex === "M" || pt.sex === "F" ? pt.sex : null, female = sex === "F";
+  const n = (x, d) => x === null || x === undefined ? null : fmtN(x, d);
+  const base = (id, name, short, used, missing) => ({id, name, short, used, missing: missing.filter(Boolean), complete:false, value:null, unit:"", cls:null, alt:false, note:null, line:null});
+  // CKD-EPI 2021: creatinina + idade (adulto) + sexo
+  if (v.cr){
+    const s = base("ckd", "CKD-EPI 2021", "TFG", [["Cr", n(v.cr, 2)], ["Idade", age], ["Sexo", sex]], [age === null && "idade", !sex && "sexo"]);
+    if (age !== null && age < 18) s.note = "Validada para adultos (18 anos ou mais).";
+    else if (!s.missing.length){
+      const g = Math.round(ckdEpi2021(v.cr, age, female));
+      Object.assign(s, {complete:true, value:String(g), unit:"mL/min/1,73 m²", cls: g >= 90 ? "G1" : g >= 60 ? "G2" : g >= 45 ? "G3a" : g >= 30 ? "G3b" : g >= 15 ? "G4" : "G5", alt: g < 60, line:"TFG " + g});
+    }
+    out.push(s);
+  }
+  // FIB-4: idade + TGO + TGP + plaquetas
+  if (v.ast && v.alt && v.plt){
+    const s = base("fib4", "FIB-4", "FIB-4", [["Idade", age], ["TGO", n(v.ast, 0)], ["TGP", n(v.alt, 0)], ["Plaq", Math.round(v.plt * 1000).toLocaleString("pt-BR")]], [age === null && "idade"]);
+    if (!s.missing.length){
+      const f = fib4(age, v.ast, v.alt, v.plt), r = Math.round(f * 100) / 100;
+      Object.assign(s, {complete:true, value:fmtN(r, 2), cls: r < 1.45 ? "Baixo" : r <= 3.25 ? "Indeterminado" : "Alto", alt: r > 3.25, line:"FIB-4 " + fmtN(r, 2)});
+    }
+    out.push(s);
+  }
+  // MELD 3.0: bilirrubina + INR + creatinina + sódio + albumina + sexo (+ diálise)
+  if (v.bt && v.inr && v.cr && v.na && v.alb){
+    const s = base("meld", "MELD 3.0", "MELD 3.0", [["BT", n(v.bt, 2)], ["INR", n(v.inr, 2)], ["Cr", n(v.cr, 2)], ["Na", n(v.na, 0)], ["Alb", n(v.alb, 1)], ["Sexo", sex]], [!sex && "sexo"]);
+    s.ask = ["dial"];
+    if (!s.missing.length){
+      const m = Math.round(meld3({bt:v.bt, inr:v.inr, cr:v.cr, na:v.na, alb:v.alb, female, dial:inp.dial}));
+      Object.assign(s, {complete:true, value:String(m), line:"MELD 3.0 " + m});
+    }
+    out.push(s);
+  }
+  // Child-Pugh: bilirrubina + albumina + INR (laudo) + ascite + encefalopatia (você)
+  if (v.bt && v.alb && v.inr){
+    const s = base("child", "Child-Pugh", "Child", [["BT", n(v.bt, 2)], ["Alb", n(v.alb, 1)], ["INR", n(v.inr, 2)]], [inp.ascite === null && "ascite", inp.ence === null && "encefalopatia"]);
+    s.ask = ["ascite", "ence"];
+    if (!s.missing.length){
+      const c = childPugh({bt:v.bt, alb:v.alb, inr:v.inr, ascite:inp.ascite, ence:inp.ence});
+      Object.assign(s, {complete:true, value:c.cls, unit:"(" + c.pts + ")", cls:"Classe " + c.cls, alt: c.cls !== "A", line:"Child-Pugh " + c.cls + " (" + c.pts + ")"});
+    }
+    out.push(s);
+  }
+  // Framingham 2008: idade + sexo + CT + HDL (laudo) + PAS, tratamento de HAS, tabagismo, diabetes (você)
+  if (v.ct && v.hdl){
+    const s = base("fram", "Framingham", "Framingham", [["Idade", age], ["Sexo", sex], ["CT", n(v.ct, 0)], ["HDL", n(v.hdl, 0)]],
+      [age === null && "idade", !sex && "sexo", !(inp.pas > 0) && "PAS", inp.has === null && "HAS", inp.tab === null && "tabagismo", inp.dm === null && "diabetes"]);
+    s.ask = ["pas", "has", "tab", "dm"];
+    if (age !== null && (age < 30 || age > 74)) s.note = "Validado para 30 a 74 anos.";
+    else if (inp.pas > 0 && (inp.pas < 70 || inp.pas > 260)) s.note = "PAS fora do esperado.";
+    else if (!s.missing.length){
+      const r = framingham2008({age, female, ct:v.ct, hdl:v.hdl, pas:inp.pas, has:inp.has, tab:inp.tab, dm:inp.dm});
+      Object.assign(s, {complete:true, value:fmtN(r, 1), unit:"%", line:"Framingham " + fmtN(r, 1) + "%"});
+    }
+    out.push(s);
+  }
+  return out;
+}
 // PARSER-END
 // Cópia do app para uso offline: só o código do próprio app (sem scripts que a página publicada receba de fora)
 const PAGE_SRC = (() => {
@@ -1503,8 +1667,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.23-1";
-const BUILD_HASH = "9d6bec99f653d81fbc3e76931f1e478a7a9607f4bacdca3f522624e9af0c1cd5";
+const APP_VERSION = "2026.10.25-1";
+const BUILD_HASH = "cbf040708dd07bdcdd49ebc07b47e9227793dbad146487515e291894eec3b74f";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -1538,7 +1702,7 @@ async function checkVersion(){
 }
 $("upd-go").addEventListener("click", () => location.reload());
 $("upd-x").addEventListener("click", () => { $("upd").hidden = true; });
-let state = {off:[], prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:false, upper:false, defaults:false, hist:true};
+let state = {off:[], prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:false, upper:false, defaults:false, hist:true, escLine:false};
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch(e){}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} };
 
@@ -1546,6 +1710,7 @@ $("prefix").value = state.prefix; $("dfmt").value = state.dfmt; $("sep").value =
 const OPTS = {prev:"o-prev", compact:"o-compact", group:"o-group", upper:"o-upper", defaults:"o-defaults", hist:"o-hist"};
 for (const [k, id] of Object.entries(OPTS)) $(id).checked = !!state[k];
 $("o-normal").checked = !state.upper;
+$("o-escline").checked = !!state.escLine;
 
 let items = [];
 let manual = new Map();   // escolhas feitas neste laudo para valores suspeitos
@@ -1559,6 +1724,7 @@ function extract(){
   const text = $("src").value;
   items = text.trim() ? parse(text, state.diff) : [];
   manual = new Map();
+  scIn = {...SC_INPUT_DEFAULT}; scBuilt = ""; $("escd").open = false;   // escores: entradas valem só para este laudo; seção sempre começa recolhida
   const p = text.trim() ? patientFrom(text) : {age:null, sex:null, name:null, key:null};
   if (p.age !== null) $("age").value = String(Math.floor(p.age));
   if (p.sex) $("sex").value = p.sex;
@@ -1805,9 +1971,84 @@ function render(){
     }
     box.append(g);
   }
-  output();
+  updateScores();
   renderHist();
 }
+// ---------- escores ----------
+let scIn = {...SC_INPUT_DEFAULT}, scores = [], scBuilt = "";
+function scPatient(){
+  const a = parseFloat(($("age").value || "").replace(",", "."));
+  return {age: isNaN(a) ? null : a, sex: $("sex").value || null};
+}
+const SC_ASK = {
+  dial:{label:"Diálise ≥2×/sem", opts:[["Não", false], ["Sim", true]]},
+  ascite:{label:"Ascite", opts:[["Ausente", 1], ["Leve", 2], ["Mod/grave", 3]]},
+  ence:{label:"Encefalopatia", opts:[["Ausente", 1], ["I–II", 2], ["III–IV", 3]]},
+  has:{label:"Trata HAS", opts:[["Não", false], ["Sim", true]]},
+  tab:{label:"Tabagismo", opts:[["Não", false], ["Sim", true]]},
+  dm:{label:"Diabetes", opts:[["Não", false], ["Sim", true]]}
+};
+function buildScoreCards(){
+  const g = $("esc-grid"); g.innerHTML = "";
+  for (const s of scores){
+    const c = document.createElement("div"); c.className = "sc"; c.dataset.id = s.id;
+    c.innerHTML = '<div class="sc-top"><span class="sc-nm"></span><span class="sc-vl"></span></div><span class="sc-pill" hidden></span><div class="sc-ins"></div>';
+    c.querySelector(".sc-nm").textContent = s.name;
+    if (s.ask && s.ask.length){
+      const ask = document.createElement("div"); ask.className = "sc-ask";
+      for (const k of s.ask){
+        const q = document.createElement("div"); q.className = "sc-q";
+        if (k === "pas"){
+          const id = "sc-pas-" + s.id;
+          q.innerHTML = '<label for="' + id + '">PAS (mmHg)</label>';
+          const inp = document.createElement("input"); inp.type = "number"; inp.inputMode = "numeric"; inp.min = "70"; inp.max = "260"; inp.step = "1";
+          inp.id = id; inp.className = "sc-num"; inp.placeholder = "—"; if (scIn.pas) inp.value = scIn.pas;
+          inp.addEventListener("input", () => { const x = parseFloat(inp.value); scIn.pas = isNaN(x) ? null : x; updateScores(); });
+          q.append(inp);
+        } else {
+          const A = SC_ASK[k], name = "sc-" + s.id + "-" + k;
+          const lb = document.createElement("span"); lb.textContent = A.label; lb.id = name + "-l";
+          const sg = document.createElement("span"); sg.className = "sc-sg"; sg.setAttribute("role", "radiogroup"); sg.setAttribute("aria-labelledby", lb.id);
+          for (const [t, val] of A.opts){
+            const l = document.createElement("label"); const r = document.createElement("input");
+            r.type = "radio"; r.name = name; r.checked = scIn[k] === val;
+            r.addEventListener("change", () => { if (r.checked){ scIn[k] = val; updateScores(); } });
+            l.append(r, t); sg.append(l);
+          }
+          q.append(lb, sg);
+        }
+        ask.append(q);
+      }
+      c.append(ask);
+    }
+    const m = document.createElement("div"); m.className = "sc-miss"; c.append(m);
+    g.append(c);
+  }
+}
+function updateScores(){
+  scores = computeScores(items, scPatient(), scIn);
+  const box = $("escd");
+  box.hidden = !scores.length;
+  const ids = scores.map(s => s.id).join();
+  if (ids !== scBuilt){ buildScoreCards(); scBuilt = ids; }
+  const sum = $("esc-sum"); sum.innerHTML = "";
+  for (const s of scores){
+    const c = $("esc-grid").querySelector('.sc[data-id="' + s.id + '"]'); if (!c) continue;
+    c.classList.toggle("wait", !s.complete);
+    const vl = c.querySelector(".sc-vl"); vl.textContent = s.complete ? s.value + " " : "—";
+    if (s.complete && s.unit){ const u = document.createElement("small"); u.textContent = s.unit; vl.append(u); }
+    const pill = c.querySelector(".sc-pill"); pill.hidden = !(s.complete && s.cls); pill.textContent = s.cls || ""; pill.classList.toggle("al", !!s.alt);
+    const ins = c.querySelector(".sc-ins"); ins.innerHTML = "";
+    for (const [k, v] of s.used){ const sp = document.createElement("span"); const b = document.createElement("b"); b.textContent = v === null || v === undefined ? "?" : v; sp.append(k + " ", b); ins.append(sp); }
+    c.querySelector(".sc-miss").textContent = s.note ? s.note : s.missing.length ? "Falta: " + s.missing.join(", ") + (s.missing.some(x => x === "idade" || x === "sexo") ? " (preencha acima)" : "") : "";
+    const chip = document.createElement("span");
+    if (s.complete){ const b = document.createElement("b"); b.textContent = s.id === "child" ? s.value : s.value + (s.unit === "%" ? "%" : ""); chip.append(s.short + " ", b); if (s.alt) chip.className = "al"; }
+    else { chip.textContent = s.short + " —"; chip.className = "pend"; }
+    sum.append(chip);
+  }
+  output();
+}
+$("o-escline").addEventListener("change", e => { state.escLine = e.target.checked; save(); output(); });
 // Monta a linha: exames um a um; urina, gram e gasometria em blocos; frações agrupadas e valor anterior conforme as opções
 function buildLine(sel){
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1903,7 +2144,9 @@ function output(){
   updateDateOptions();
   const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const h = state.upper ? head.toUpperCase() : head;
-  $("out").innerHTML = sel.length ? (h ? esc(h) + ": " : "") + buildLine(sel) : "";
+  const scLine = state.escLine ? scores.filter(s => s.complete).map(s => s.line) : [];
+  const scTxt = scLine.length ? "\n\n" + esc((state.upper ? "ESCORES: " : "Escores: ") + (state.upper ? scLine.map(x => x.toUpperCase()) : scLine).join(state.sep)) : "";
+  $("out").innerHTML = sel.length ? (h ? esc(h) + ": " : "") + buildLine(sel) + scTxt : "";
   $("copy").disabled = !sel.length;
   $("copy").textContent = "Copiar";
 }
@@ -1924,10 +2167,6 @@ for (const [k, id] of Object.entries(OPTS)) $(id).addEventListener("change", e =
   if (k === "hist" && state.hist) scheduleSave();
   render();
 });
-// a barra fixa da linha cresce com o conteúdo: o fim da página sempre fica acima dela
-{ const bar = document.querySelector(".out"), wrap = document.querySelector(".wrap");
-  const fit = () => { wrap.style.paddingBottom = Math.max(190, Math.ceil(bar.getBoundingClientRect().height) + 24) + "px"; };
-  try { new ResizeObserver(fit).observe(bar); } catch(e){ addEventListener("resize", fit); } fit(); }
 // a barra fixa da linha cresce com o conteúdo: o fim da página sempre fica acima dela
 { const bar = document.querySelector(".out"), wrap = document.querySelector(".wrap");
   const fit = () => { wrap.style.paddingBottom = Math.max(190, Math.ceil(bar.getBoundingClientRect().height) + 24) + "px"; };
@@ -1982,7 +2221,7 @@ async function copyText(text, html){
 $("copy").addEventListener("click", async () => {
   const o = $("out");
   const text = o.innerText.replace(/ /g, " ").trim();
-  const html = '<span>' + o.innerHTML.replace(/<span class="alt">/g, '<span style="color:#C00000;font-weight:bold">') + '</span>';
+  const html = '<span>' + o.innerHTML.replace(/<span class="alt">/g, '<span style="color:#C00000;font-weight:bold">').replace(/\n/g, "<br>") + '</span>';
   const ok = await copyText(text, html);
   $("copy").textContent = ok ? "Copiado" : "Selecione e copie";
   saveCurrent();
@@ -2011,6 +2250,7 @@ $("diag").addEventListener("click", async () => {
     "EXAMES (" + items.length + ")"];
   for (const it of items) r.push("- " + it.ab + " = " + it.v + " | " + (it.flag || "sem marcação") + (it.refDefault ? " (padrão do app)" : "") + (it.suspect ? " | FORA DO POSSÍVEL" : "")
     + "\n    linha: " + it.src.slice(0, 200) + "\n    referência: " + (it.ref || "—"));
+  if (scores.length){ r.push("", "ESCORES"); for (const s of scores) r.push("- " + s.name + ": " + (s.complete ? s.value + (s.unit ? " " + s.unit : "") + (s.cls ? " | " + s.cls : "") : "incompleto (falta: " + (s.note || s.missing.join(", ")) + ")") + " | usados: " + s.used.map(([k, v]) => k + " " + v).join(", ")); }
   r.push("", "NÃO RECONHECIDOS: " + ((items.missed || []).join(", ") || "nenhum"), "", "LINHA FINAL:", $("out").innerText.trim());
   let txt = r.join("\n");
   if (patient.name) for (const w of patient.name.split(" ").filter(w => w.length > 2)) txt = txt.split(w).join("•••");
