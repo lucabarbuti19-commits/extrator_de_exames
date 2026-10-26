@@ -46,7 +46,15 @@ details.escd>summary:focus-visible{outline:2px solid var(--accent);outline-offse
 .esc-chev{flex:none;color:var(--muted);transition:transform .15s}
 details.escd[open] .esc-chev{transform:rotate(180deg)}
 .esc-in{padding-bottom:14px}
-.esc-h{display:flex;justify-content:flex-end}
+.esc-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.esc-pt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sc-fl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sc-f{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:8px;padding:3px 7px;background:var(--bg);font-size:.8rem;color:var(--muted)}
+.sc-f b{color:var(--ink);font-weight:650}
+.sc-in{width:58px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:.85rem;text-align:right;padding:1px 0;font-variant-numeric:tabular-nums}
+.sc-in:focus{outline:none}.sc-f:focus-within{border-color:var(--accent)}
+.sc-lab{font-size:.68rem;padding:0 4px;border-radius:4px;color:var(--accent);border:1px solid var(--accent)}
+.sc-lab[hidden]{display:none}
 .sw{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);cursor:pointer;position:relative}
 .sw input{position:absolute;opacity:0;width:34px;height:20px;margin:0;cursor:pointer}
 .sw i{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;display:inline-block;transition:background .15s}
@@ -64,8 +72,6 @@ details.escd[open] .esc-chev{transform:rotate(180deg)}
 .sc-pill{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:650;background:var(--bg);border:1px solid var(--line)}
 .sc-pill.al{color:var(--alt);border-color:var(--alt)}
 .sc-pill[hidden],.sc-miss:empty{display:none}
-.sc-ins{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:8px;font-size:.8rem;color:var(--muted)}
-.sc-ins b{color:var(--ink);font-weight:600}
 .sc-ask{margin-top:10px;display:grid;gap:7px}
 .sc-q{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem}
 .sc-sg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:none}
@@ -300,12 +306,12 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
   <div id="found"></div>
   <details class="src" id="srcbox" hidden><summary>Ver de onde veio cada valor</summary><ul id="srclist"></ul></details>
 
-  <details class="escd" id="escd" hidden>
+  <details class="escd" id="escd">
     <summary><span class="esc-t">Escores</span><span class="esc-sum" id="esc-sum"></span><span class="esc-chev" aria-hidden="true">▾</span></summary>
     <div class="esc-in">
-      <div class="esc-h"><label class="sw"><input type="checkbox" id="o-escline"><i aria-hidden="true"></i>Incluir na linha</label></div>
+      <div class="esc-h"><div class="esc-pt"><label class="sc-f"><b>Idade</b><input id="sc-age" class="sc-in" inputmode="decimal" placeholder="—" aria-label="Idade (anos)"></label><span class="sc-sg" role="radiogroup" aria-label="Sexo"><label><input type="radio" name="sc-sex" value="M">M</label><label><input type="radio" name="sc-sex" value="F">F</label></span></div><label class="sw"><input type="checkbox" id="o-escline"><i aria-hidden="true"></i>Incluir na linha</label></div>
       <div class="esc-grid" id="esc-grid"></div>
-      <p class="esc-note">Calculados pelo app com os valores do laudo e o que você marcar. Confira antes de usar.</p>
+      <p class="esc-note">Valores com "laudo" vêm do exame colado; os demais você digita. Confira antes de usar.</p>
     </div>
   </details>
 
@@ -367,6 +373,7 @@ const CATS = {
   preto:{name:"VHS", c:"var(--preto)"},
   fezes:{name:"Fezes", c:"var(--urina)"},
   u24:{name:"Urina de 24 horas", c:"var(--urina)"},
+  uiso:{name:"Urina (amostra isolada)", c:"var(--urina)"},
   urina:{name:"Urina tipo I", c:"var(--urina)", seg:"U1"},
   gram:{name:"Bacterioscópico de urina", c:"var(--gram)", seg:"Gram U"},
   gasoA:{name:"Gasometria arterial", c:"var(--heparina)", seg:"Gaso art"},
@@ -394,7 +401,8 @@ const EX = [
   ["Linf","edta","linfocitos(?: tipicos| totais)?",1],
   ["Atíp","edta","linfocitos atipicos|atipicos",1],
   ["Blastos","edta","blastos",1],
-  ["Promielócitos","edta","promielocitos",1],
+  ["Mieloblastos","edta","mieloblastos",1],
+  ["Promielócitos","edta","pro ?-? ?mielocitos",1],
   ["Mielócitos","edta","mielocitos",1],
   ["Metamielócitos","edta","metamielocitos",1],
   ["Mono","edta","monocitos",1],
@@ -403,7 +411,7 @@ const EX = [
   ["Plaq","edta","plaquetas|contagem de plaquetas|total de plaquetas"],
   ["VPM","edta","volume plaquetario medio|vpm"],
   ["Retic","edta","reticulocitos"],
-  ["HbA1c","edta","hemoglobina glicada|hemoglobina glicosilada|hba1c|a1c"],
+  ["HbA1c","edta","(?:hemoglobina|hb) glicada|(?:hemoglobina|hb) glicosilada|(?:hemoglobina|hb) a1c|glicohemoglobina|hba1c|a1c"],
   ["Ur","soro","ureia|ur"],
   ["Cr","soro","creatinina|cr"],
   ["TFG","soro","ckd ?-? ?epi 2021(?=\\s*:)|(?:(?:estimativa da )?(?:taxa|ritmo) de filtracao glomerular|filtracao glomerular|e?gfr|e?tfg ?e?|rfg ?e?|clearance (?:de creatinina )?estimado)(?: estimad[ao]| calculad[ao])?(?:\\s*\\(?\\s*e?(?:tfg|rfg|gfr)e?\\s*\\)?)?(?:[ ,\\-–:]*\\(?\\s*(?:ckd ?-? ?epi|mdrd|cockcroft(?:[ -]gault)?)(?:\\s*(?:versao\\s*)?20\\d\\d)?\\s*\\)?)?"],
@@ -494,6 +502,11 @@ const EX = [
   ["Normetanefrina","u24","normetanefrinas?(?: livre)?"],
   ["Vol 24h","u24","volume urinario(?: de 24 ?h(?:oras)?| em 24 ?h(?:oras)?)?|volume de 24 ?h(?:oras)?"],
   ["Calpro","fezes","calprotectina(?: fecal)?"],
+  ["PPF","fezes","(?:proto)?parasitologico(?: de fezes)?(?:\\s*[-–]?\\s*\\d\\s*[ªa°o]?\\s*amostra)?|exame parasitologico(?: de fezes)?|epf","t"],
+  ["SOF","fezes","pesquisa de sangue oculto(?: nas fezes)?|sangue oculto(?: nas fezes)?"],
+  ["RAC","uiso","relacao (?:de )?albumina ?/ ?creatinina(?: (?:em|na) urina| urinaria)?|relacao albumina creatinina|albumina ?/ ?creatinina|rac"],
+  ["Alb U","uiso","albumina (?:urinaria|na urina|em urina)|microalbuminuria"],
+  ["Cr U","uiso","creatinina (?:urinaria|na urina|em urina)"],
   ["Gli","fluoreto","glicose(?: de jejum| plasmatica| serica)?|glicemia(?: de jejum)?"],
   ["GME","fluoreto","glicose media estimada|\\(?gme\\)?|\\(?eag\\)?"],
   ["VHS","preto","vhs|velocidade de hemossedimentacao"],
@@ -605,6 +618,7 @@ function coletas(text){
       const before = norm(line.slice(Math.max(0, m.index - 40), m.index));
       const atStart = !line.slice(0, m.index).trim();
       if (/nasc|emiss|liber|impress|entrada|cadastro|assinatura/.test(before)) continue;
+      if (+m[1] < 1 || +m[1] > 31 || +m[2] < 1 || +m[2] > 12) continue;
       if (/colet|colhid|data da ficha/.test(before) || (atStart && (/colet\w*\s*(?:em)?\s*:?\s*$|^data da ficha\s*:?$/.test(prev) || (/^data da ficha\s*:?$/.test(prev2) && /^\d{5,}$/.test(prev))))){
         let y = m[3] ? +m[3] : null; if (y !== null && y < 100) y += 2000;
         out.push({d:m[1], m:m[2], y});
@@ -629,6 +643,7 @@ function findDateFull(text){
     const ls = text.lastIndexOf("\n", m.index) + 1;
     const before = norm(text.slice(Math.max(ls, m.index - 40), m.index));
     if (/nasc|emiss|liber|impress|assinatura|a partir|alterad|publicac/.test(before)) continue;
+    if (+m[1] < 1 || +m[1] > 31 || +m[2] < 1 || +m[2] > 12) continue;
     if (!first) first = m[3] + "-" + m[2] + "-" + m[1];
   }
   return first;
@@ -650,6 +665,7 @@ function findDate(text){
     const ls = text.lastIndexOf("\n", m.index) + 1;
     const before = norm(text.slice(Math.max(ls, m.index - 40), m.index));
     if (/nasc|emiss|liber|impress/.test(before)) continue;
+    if (+m[1] < 1 || +m[1] > 31 || +m[2] < 1 || +m[2] > 12) continue;   // "5237-7877/5237" (telefone) não é data
     const d = m[1] + "/" + m[2];
     if (/colet|colhid/.test(before)) return d;
     if (!first) first = d;
@@ -722,9 +738,16 @@ function urineLT(raw, ex){
   return m ? "<" + m[1] : null;
 }
 function readValue(raw, ex, diffMode, strict){
+  if (ex.ab === "HbA1c" && /mmol\s*\/\s*mol|ifcc/i.test(raw) && !/\d\s*%/.test(raw)) return null;
+  if (ex.ab === "HbA1c" && /mmol\s*\/\s*mol/i.test(raw)){ const m = raw.match(/(?<![\d.,])(\d{1,2}[.,]\d)\s*%/); if (m) return m[1]; }   // "51 mmol/mol   6,8 %": vale o %   // HbA1c em mmol/mol (IFCC): o app usa o % (NGSP)
   let t = stripName(raw, ex);
   let n = norm(t).replace(/^resultados?\s*[:\-]?\s*/, "").replace(/^(?:primeira|1\s*[aª°o]\.?)\s*hora\s*:?\s*/, "");   // VHS: "Primeira hora 4 mm/h"
   t = t.slice(t.length - n.length);
+  // "70 a 99 mg/dL 83 mg/dL" (Chrome): faixa com unidade e, depois, o resultado com a mesma unidade
+  { const m = n.match(/^\s*(?:[a-z][a-z0-9 ]*:\s*)?-?\d+(?:[.,]\d+)*\s*(?:a|-|–|ate)\s*-?\d+(?:[.,]\d+)*\s*([a-zµ%][a-z0-9µ%\/.]*)\s+((?:[<>]\s?)?-?\d+(?:[.,]\d+)*)\s*([a-zµ%][a-z0-9µ%\/.]*)\s*$/);
+    if (m && m[1] === m[3]) return m[2].replace(/\s/g, ""); }
+  if (strict && /^\d{1,2}\s*[°º]/.test(t.trimStart())) return null;   // "1° trimestre: ..." é rótulo da referência
+  if (strict && /^\d{1,2}[.)]\s+[a-z]{2,}/.test(n)) return null;   // nota numerada ("1. Nas primeiras 72h de vida...")
   if (/^(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*\s*(?:a|-|–|ate)\s*\d/.test(n)) return null; // linha que começa com faixa é referência
   // número seguido de ":" ";" ")" é citação ou tabela ("40: 78-89)", "2011; 34"), não resultado
   if (strict && /^(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*\s*[:;)(]/.test(n)) return null;
@@ -741,6 +764,7 @@ function readValue(raw, ex, diffMode, strict){
   n = norm(t);
   if (!n.trim()) return null;
   if (REF_START.test(n)) return null;
+  if (/^negativ[oa] para (?:helmintos|protozoarios|parasitas|ovos)/.test(n)) return "Neg";   // parasitológico
   for (const [re, ab] of QUAL){
     const m = re.exec(n);
     // em linha solta, palavra qualitativa seguida de texto corrido não é resultado ("Alguns autores sugerem...");
@@ -886,6 +910,36 @@ function parseTOTG(c){
 const GT_OK = new Set(["TFG", "Calpro"]);
 function parse(text, diffMode){
   const lines = text.replace(/\u00ad/g, "-").replace(/[\u00a0\u2007\u202f]/g, " ").split(/\r?\n/);
+  // texto simples com a faixa quebrada em linhas ("4.0" / "-" / "5.2"): junta numa linha só, para não virar resultado
+  { const nx = k => { for (let j = k + 1; j < lines.length; j++) if (lines[j].trim()) return j; return -1; };
+    for (let i = 0; i < lines.length; i++){
+      if (!/^\s*-?\d+(?:[.,]\d+)*\s*$/.test(lines[i])) continue;
+      const d = nx(i); if (d < 0 || !/^\s*(?:-|–|a|ate|até)\s*$/i.test(lines[d])) continue;
+      const e = nx(d); if (e < 0 || !/^\s*-?\d+(?:[.,]\d+)*\s*$/.test(lines[e])) continue;
+      lines[i] = lines[i].trim() + " - " + lines[e].trim(); lines[d] = ""; lines[e] = ""; i = e;
+    }
+    // número solto seguido de um "-" sozinho é começo de faixa sem fim ("5000" / "-" / "-"): não é resultado
+    for (let i = 0; i < lines.length; i++){
+      if (!/^\s*-?\d+(?:[.,]\d+)*\s*$/.test(lines[i])) continue;
+      const d = nx(i); if (d >= 0 && /^\s*[-–]\s*$/.test(lines[d])) { lines[i] = ""; continue; }
+      let pv = -1; for (let j = i - 1; j >= 0; j--) if (lines[j].trim()){ pv = j; break; }
+      if (pv >= 0 && /^\s*[-–]\s*$/.test(lines[pv])) lines[i] = "";   // ... e o fim dela também
+    } }
+  // texto simples com a coluna de valores ANTES da coluna de nomes ("4.28 milhões/uL" ... "Eritrócitos" ...):
+  // se as duas colunas têm o mesmo tamanho, cada nome recebe o valor da mesma posição
+  { const VAL = /^\s*(?:[<>]\s*)?-?\d+(?:[.,]\d+)*(?:\s+[a-zA-Zµμõã%][a-zA-Zµμõã%\/0-9³]*)?\s*$/;
+    const isName = l => { const t = norm(l.trim()); if (!t || /\d/.test(t)) return false; const h = matchExam(t, EX); return !!h && t.length - h.len <= 2; };
+    for (let i = 0; i < lines.length; i++){
+      if (!VAL.test(lines[i])) continue;
+      const vals = []; let j = i;
+      for (; j < lines.length; j++){ if (!lines[j].trim()) continue; if (VAL.test(lines[j])) vals.push(j); else break; }
+      const names = []; let k = j;
+      for (; k < lines.length && names.length < vals.length; k++){ if (!lines[k].trim()) continue; if (isName(lines[k])) names.push(k); else break; }
+      if (vals.length >= 3 && names.length === vals.length && (k >= lines.length || !isName(lines.slice(k).find(l => l.trim()) || ""))){
+        names.forEach((n, q) => { lines[n] = lines[n].trim() + " " + lines[vals[q]].trim(); lines[vals[q]] = ""; });
+        i = k - 1;
+      } else i = Math.max(i, j - 1);
+    } }
   const evo = evolutiveSpans(lines);
   for (let i = 0; i + 1 < lines.length; i++){
     const a = lines[i], b = lines[i + 1];
@@ -983,7 +1037,7 @@ function parse(text, diffMode){
     if (GASO_A_HDR.test(n)){ closeBlock(); list = EXGA; pending = []; bounds.add(i); continue; }
     if (GASO_V_HDR.test(n)){ closeBlock(); list = EXGV; pending = []; bounds.add(i); continue; }
     if (title.length <= 70 && /[A-ZÀ-Ú]{3}/.test(title) && !/[a-zà-ú]/.test(title) && !/\d{3}/.test(title) && !/:/.test(title)
-        && !/^(?:DRA?\.|PREFEITURA|SECRETARIA|SEDIMENTO|BIOM|EXAMES ASSINADOS|LAUDO|N[ÃA]O REAGENTE|REAGENTE|NEGATIVO|POSITIVO|AUSENTE|PRESENTE|INDETERMINADO|AMOSTRA|EQUIPE|MULTIPROFISSIONAL|PMSP|RESULTADOS? ANTERIORES|RESULTADOS?$|VALOR(?:ES)? DE REFER|ANALITOS)\b/.test(title)
+        && !/^(?:DRA?\.|PREFEITURA|SECRETARIA|SEDIMENTO|BIOM|EXAMES ASSINADOS|LAUDO|N[ÃA]O REAGENTE|REAGENTE|NEGATIV[OA]S?|POSITIV[OA]S?|AUSENTES?|PRESENTES?|N[ÃA]O DETECTAD[OA]S?|DETECTAD[OA]S?|INDETERMINAD[OA]|AMOSTRA|EQUIPE|MULTIPROFISSIONAL|PMSP|RESULTADOS? ANTERIORES|RESULTADOS?$|VALOR(?:ES)? DE REFER|ANALITOS)\b/.test(title)
         && nextLines(i).some(x => /^resultados?\b|valor(?:es)? de referencia/.test(x))){
       closeBlock(); block = {title, size: found.size}; bounds.add(i);
       if (list === EXBIL) list = EX;
@@ -1069,6 +1123,15 @@ function parse(text, diffMode){
           else store(p, raw, raw, run[k]);
         });
         absWait = []; pending = pending.filter(p => !found.has(p.key));
+      } else if (diffS.length >= 2 && run.length === diffS.length + S.length && new Set(S.map(p => p.key)).size === S.length){
+        // coluna de % (só o diferencial) emendada na coluna de absolutos (todos): "0.0 ... 8.5" + "9970 ... 847"
+        diffS.forEach((p, k) => put(p, run[k], true));
+        diffS.forEach(p => { if (found.has(p.key)) found.get(p.key).colOnly = true; });
+        S.forEach((p, k) => { const raw = lines[run[diffS.length + k]].trim();
+          if (found.has(p.key)){ const it = found.get(p.key); if (p.diff){ it.vAbs = raw; if (diffMode === "abs") it.v = raw; } }
+          else store(p, raw, raw, run[diffS.length + k]);
+          if (found.has(p.key)) found.get(p.key).colOnly = true; });
+        pending = pending.filter(p => !found.has(p.key)); absWait = [];
       } else for (const p of pending) unresolved.add(p);
       seq = [];
       i = j - 1; continue;
@@ -1076,7 +1139,7 @@ function parse(text, diffMode){
     if (!pending.length) continue;
     const tfgP = pending.find(p => GT_OK.has(p.ab));
     if (tfgP){
-      const m = n.match(/^\s*(?:resultados?\s*:?\s*)?(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
+      const m = n.replace(/\s{2,}metodo\s*:.*$/, "").replace(/^\s*metodo\s*:\s*calculo\s+/, "").match(/^\s*(?:resultados?\s*:?\s*)?(?:superior a|maior que|maior ou igual a|acima de|>=?|≥)\s*(\d+(?:[.,]\d+)?)\s*(?:ml\/min[^\d]*(?:1[.,]73\s*m[²2]?)?)?\s*$/);
       if (m && (/^\s*resultado/.test(n) || pending[0] === tfgP)){ store(tfgP, ">" + m[1], line, i); continue; }
       // "superior a 1800 mcg/g de fezes   NORMAL : Inferior a 50": logo abaixo do cabeçalho RESULTADO, com a referência ao lado
       const m2 = n.match(/^\s*(?:superior a|maior que|acima de|>)\s*(\d+(?:[.,]\d+)?)\b/);
@@ -1111,9 +1174,10 @@ function parse(text, diffMode){
     }
     // "Método: Jaffé sem desproteinização 0,86 mg/dL": a parte do método some e o valor fica
     const nb = norm(blankRefs(line)).trimStart();
-    if (!nb || (LABEL.test(nb) && !RESULT_INLINE.test(nb))) continue;
+    if (!nb || (LABEL.test(nb) && !RESULT_INLINE.test(nb) && !RESULT_INLINE.test(norm(line)))) continue;   // "Resultado: 6,8 %": o ": 6,8" parece referência, mas é o resultado
     if (HDR_ALONE.test(prevLine(i))) continue;   // "Solicitante:" numa linha e "251931 - Fulana" na seguinte: é cabeçalho, não resultado
-    const v = readValue(line, pending[0], diffMode, true);
+    if (/^(?:Plaq|Leuco|Hm|Hb)$/.test(pending[0].ab) && /\d\s*%/.test(line)) continue;   // contagem nunca é "%": "100 %" é a coluna do leucograma
+    const v = readValue(line, pending[0], diffMode, true) ?? urineLT(line, pending[0]);   // urina: "INFERIOR A 1 mg/dL" é resultado
     if (v !== null) store(pending[0], v, line, i);
   }
   closeCult(); closeTotg(); closeBlock();
@@ -1129,8 +1193,14 @@ function parse(text, diffMode){
   const hidden = [...found.values()].filter(x => x.ab[0] === "_");
   const out = [...found.values()].filter(x => x.ab[0] !== "_").sort((a,b) => a.order - b.order);
   out.hiddenLines = hidden.flatMap(x => [x.ni, x.vi]);
+  // laudo com ponto decimal ("Hemoglobina 11.8 g/dL"): mostra com vírgula, como os demais
+  const dotDec = x => typeof x === "string" && /^[<>≤≥]?-?\d+\.\d{1,2}$/.test(x);
+  if (out.some(x => dotDec(x.v)) && !out.some(x => /^[<>≤≥]?-?\d+,\d+$/.test(String(x.v)))){
+    const fix = x => dotDec(x) ? x.replace(".", ",") : x;
+    for (const it of out){ it.v = fix(it.v); if (it.vPct !== undefined) it.vPct = fix(it.vPct); if (it.vAbs !== undefined) it.vAbs = fix(it.vAbs); }
+  }
   for (const it of out) it.suspect = implausible(it);
-  out.missed = [...new Set(missed)];
+  out.missed = [...new Set(missed)].filter(m => !(/hemograma|leucograma|eritrograma/.test(norm(m)) && out.some(x => x.cat === "edta")));   // título do bloco cujos valores vieram depois (colunas)
   out.lines = lines; out.bounds = bounds;
   return out;
 }
@@ -1217,6 +1287,10 @@ function patientFrom(text){
       if (m) p.sex = m[1][0] === "m" ? "M" : "F";
     }
   }
+  if (p.sex === null){   // "Sexo" no fim de uma linha e ": F" na seguinte
+    const m = norm(text).match(/(?:sexo|genero)\s*\n\s*:\s*(masculino|feminino|m|f)\b/);
+    if (m) p.sex = m[1][0] === "m" ? "M" : "F";
+  }
   return p;
 }
 const UNIT_TOK = /^\s*((?:[a-zµμ%][a-z0-9µμ%²³.,]*)?(?:\/[a-z0-9µμ.,²³]+)+|%|index|ui|u)(?=\s|$|[),;])/i;
@@ -1228,12 +1302,12 @@ const AGEU = "(dias?|mes(?:es)?|anos?|semanas?)";
 function qualifiers(n){
   const q = {};
   let m;
-  if ((m = new RegExp("(\\d+(?:[.,]\\d+)?)\\s*"+AGEU+"?\\s*(?:a|ate|-)\\s*(\\d+(?:[.,]\\d+)?)\\s*"+AGEU).exec(n))){
+  if ((m = new RegExp("(\\d+(?:[.,]\\d+)?)\\s*"+AGEU+"?\\s*(?:a|ate|-|–)\\s*(\\d+(?:[.,]\\d+)?)\\s*"+AGEU).exec(n))){
     const u1 = m[2] || m[4];
     q.age = [toYears(nb(m[1]), u1), toYears(nb(m[3]) + 1, m[4])]; q.ageTxt = m[0];
-  } else if ((m = new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|maiores de|apos|maior(?:es)? ou igual a|igual ou (?:maior|superior) a|≥|>=?)\\s*(\\d+)\\s*"+AGEU).exec(n))){
+  } else if ((m = new RegExp("(?:a partir d[eo]s?|acima d[eo]s?|maiores de|apos|maior(?:es)? ou igual a|igual ou (?:maior|superior) a|superior a|≥|>=?)\\s*(\\d+)\\s*"+AGEU).exec(n))){
     q.age = [toYears(+m[1], m[2]), Infinity]; q.ageTxt = m[0];
-  } else if ((m = new RegExp("(?:abaixo d[eo]s?|menores de|ate|≤|<=?)\\s*(\\d+)\\s*"+AGEU).exec(n))){
+  } else if ((m = new RegExp("(?:abaixo d[eo]s?|menores de|inferior a|ate|≤|<=?)\\s*(\\d+)\\s*"+AGEU).exec(n))){
     q.age = [0, toYears(+m[1], m[2])]; q.ageTxt = m[0];
   }
   const isM = /\b(?:homens?|homem|masculino|sexo masculino)\b/.test(n), isF = /\b(?:mulheres?|feminino|sexo feminino)\b/.test(n);
@@ -1256,14 +1330,14 @@ function condition(n){
   if ((m = new RegExp("(?:igual ou superior a|maior ou igual a|≥|>=)\\s*"+NUMR).exec(n))) return c(nb(m[1]), Infinity, true, false, m.index + m[0].length);
   if ((m = new RegExp("(?:igual ou inferior a|menor ou igual a|≤|<=)\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, true, m.index + m[0].length);
   if ((m = new RegExp("(?:^|\\s)(?:de\\s+)?"+NUMR+"\\s*(?:a|ate|-|–)\\s*"+NUMR+"(?![\\d])").exec(n))){ if (nb(m[1]) > nb(m[2])) return null; return c(nb(m[1]), nb(m[2]), true, true, m.index + m[0].length); }
-  if ((m = new RegExp("(?:superior a|maior que|maior de|acima de|>)\\s*"+NUMR).exec(n))) return c(nb(m[1]), Infinity, false, false, m.index + m[0].length);
+  if ((m = new RegExp("(?:superior? a|maior que|maior de|acima de|>)\\s*"+NUMR).exec(n))) return c(nb(m[1]), Infinity, false, false, m.index + m[0].length);
   if ((m = new RegExp("(?:inferior a|menor que|menor de|abaixo de|<)\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, false, m.index + m[0].length);
   if ((m = new RegExp("(?:^|\\s)ate\\s*"+NUMR).exec(n))) return c(-Infinity, nb(m[1]), false, true, m.index + m[0].length);
   if ((m = /\b(ausentes?|negativ[oa]s?|nao reagente|nao detectad[oa]|indetectavel|raras|raros|tracos)\b/.exec(n))) return {qual:true, at:m.index + m[0].length};
   return null;
 }
-const NORMAL_LBL = /normal|baixo risco|nao reagente|negativ|desejavel|otimo|adequad|suficiente|saudavel|ausente/;
-const ABN_LBL = /duvidos|alterad|reagente|positiv|risco|diabet|deficien|insuficien|elevad|\balt[oa]\b|limitrofe|indetermin|inconclusiv|reducao|diminuicao|falencia|sugestiv|doenca|toxic|hipo|hiper|pre ?diab|intoleran|muito/;
+const NORMAL_LBL = /nao diabet|normal|baixo risco|nao reagente|negativ|desejavel|otimo|adequad|suficiente|saudavel|ausente/;
+const ABN_LBL = /duvidos|alterad|aumentad|reagente|positiv|risco|diabet|deficien|insuficien|elevad|\balt[oa]\b|limitrofe|indetermin|inconclusiv|reducao|diminuicao|falencia|sugestiv|doenca|toxic|hipo|hiper|pre ?diab|intoleran|muito/;
 function category(label){
   const l = label.replace(/e grupos? de risco\*?/g, "").replace(/populac\w+/g, "");
   if (NORMAL_LBL.test(l)) return "normal";
@@ -1279,18 +1353,23 @@ function clausesOf(line, li){
   if ((n.match(/\)/g) || []).length > (n.match(/\(/g) || []).length) return [];
   if (/\b(?:sugere|devem?|podem?|estiverem|apresentam|recomenda|considerad|interpreta|provavelmente|observad)/.test(n)) return [];   // texto corrido
   if (/terapeutic|anticoagul|sangramento|\bmeta\b|\balvo\b/.test(n)) return [];
+  if (/\b(?:horario|dose|insulinas?|seringa|lancetas?|tiras? reagentes?|quantidade)\b/.test(n)) return [];   // formulário de insumos (PAMG): doses de insulina não são referência
   if (/\b(?:avenida|av\.|rua|alameda|rodovia|cep|telefone|fone|cnpj|pagina|impresso em|autenticidade|hash|token|assinatura digital)\b|\b\d{5}\s*-\s*\d{3}\b|[0-9a-f]{20,}/.test(n)) return [];   // endereço, CEP, rodapé, códigos de autenticação
-  if (/\d+-\d+-\d+|\b\d{4,}\s*-\s*\d{4,}\b|\b\d{6,}\b/.test(n)) return [];   // números de pedido/OS ("0000-00000-00"), não faixas   // faixa terapêutica do INR, metas: não são referência
+  if (/\d+-\d+-\d+|\b\d{4,}-\d{4,}\b|\b\d{4,}\s+-\s+\d{4,}\b(?!\s*(?:\/|mil|cel|u\/|mm))|\b\d{6,}\b/.test(n)) return [];   // números de pedido/OS ("0000-00000-00"), não faixas   // faixa terapêutica do INR, metas: não são referência
   // citações: "2011; 34(suppl 1)", "J Urol. 1996 Apr;155(4):1336-9" (um ano sem unidade depois)
   if (/\b(?:19|20)\d{2}\b(?!\s*(?:[a-zµ%]*\/|%|[a-zµ]+\/))|et al|doi|\d\s*\(\d+\)\s*:/.test(n)) return [];
   // pontos de corte: início de rótulo ("Homens:", "Normal :") ou de faixa etária ("0 a 3 meses")
   const cuts = new Set([0]); let m;
   // faixas etárias inteiras ("0 a 3 meses", "1 mês a 18 anos", "A partir de 19 anos") não podem ser cortadas no meio
   const ages = [];
-  const ag = new RegExp("(^|\\s)((?:(?:populacao )?(?:saudavel )?(?:a partir d[eo]s?|acima d[eo]s?|abaixo d[eo]s?|maiores de|menores de|[<>≤≥]=?)\\s*)?\\d+(?:[.,]\\d+)?\\s*(?:"+AGEU+"\\s*)?(?:(?:a|ate|-)\\s*\\d+(?:[.,]\\d+)?\\s*)?"+AGEU+")\\b", "g");
+  const ag = new RegExp("(^|\\s)((?:(?:populacao )?(?:saudavel )?(?:a partir d[eo]s?|acima d[eo]s?|abaixo d[eo]s?|maiores de|menores de|superior a|inferior a|[<>≤≥]=?)\\s*)?\\d+(?:[.,]\\d+)?\\s*(?:"+AGEU+"\\s*)?(?:(?:a|ate|-|–)\\s*\\d+(?:[.,]\\d+)?\\s*)?"+AGEU+")\\b", "g");
   while ((m = ag.exec(n))){ const a = m.index + m[1].length; ages.push([a, a + m[2].length]); cuts.add(a); }
   const lbl = /(^|\s)([a-z*][a-z ()*\/.\-]*?)\s*:/g;
   while ((m = lbl.exec(n))){ const a = m.index + m[1].length; if (!ages.some(([x, y]) => a > x && a < y)) cuts.add(a); }
+  // duas faixas na mesma linha, em colunas ("2 - 11      80 - 1200 /uL"): cada uma vira um trecho
+  const rgs = []; const rg = /(^|\s)(?:de\s+)?-?\d+(?:[.,]\d+)*\s*(?:a|ate|-|–)\s*-?\d+(?:[.,]\d+)*(?![\d.,])/g;
+  while ((m = rg.exec(n))){ const a = m.index + m[1].length; if (!ages.some(([x, y]) => a >= x && a < y)) rgs.push([a, m.index + m[0].length]); }
+  if (!ages.length && !n.includes(":")) for (let k = 1; k < rgs.length; k++) if (/^\s+$/.test(n.slice(rgs[k-1][1], rgs[k][0]))) cuts.add(rgs[k][0]);   // tabela por idade ("Masculino | Feminino") fica como está   // só quando separadas por espaço largo (coluna)
   const pos = [...cuts].sort((a,b) => a - b);
   const out = []; let carry = "";
   for (let k = 0; k < pos.length; k++){
@@ -1304,7 +1383,7 @@ function clausesOf(line, li){
     const fq = qualifiers(full);
     const label = (full.replace(fq.ageTxt || "\u0000", " ").match(/^([^:]*?):/) || [,""])[1];
     const after = (lab ? body.slice(body.indexOf(":") + 1) : body).slice(cond.at);
-    const um = after.match(UNIT_TOK);
+    const um = after.replace(/^,(?=[a-zµ])/, "").match(UNIT_TOK);   // "Superior a 90,mL/min"
     // categoria depois da faixa: "Menor que 5,7% - baixo risco de ...", "5,7 a 6,4% - risco aumentado"
     const tail = label.trim() ? null : (after.match(/^\s*(?:%|[a-zµ]*\/[a-z0-9]+)?\s*[-–]\s*([a-z][a-z ,]{3,80}?)\s*\*?\s*$/) || [])[1];
     out.push({...cond, li, q:fq, cat:category(tail || label), label, unit: um ? normUnit(um[1]) : null,
@@ -1337,10 +1416,16 @@ function judge(it, cls){
     if (QUAL_ABN.test(it.v)) return {flag:"alto", ref:show(cls)};
     return {flag:null, ref:show(cls)};
   }
-  const num = cls.filter(c => !c.qual);
+  let num = cls.filter(c => !c.qual);
   // diferencial: compara na mesma escala da referência (absoluto, a não ser que a referência seja em %)
   let vv = it.v;
-  if (it.ex && it.ex.diff && it.vAbs !== undefined){ vv = num.length && num.every(c => c.unit === "%") ? it.vPct : it.vAbs; }
+  if (it.ex && it.ex.diff && it.vAbs !== undefined){
+    // colunas "%" e "/uL" lado a lado ("2 - 11   80 - 1200 /uL"): cada faixa vale para a sua escala
+    const isAbs = c => (c.unit && /\/(?:u?l|mm3|mm³|mcl)|mil/.test(c.unit)) || (c.hi !== Infinity && c.hi > 100);
+    const absC = num.filter(isAbs), pctC = num.filter(c => !isAbs(c));
+    if (absC.length && pctC.length && pctC.every(c => c.unit === null || c.unit === "%")){ num = absC; vv = it.vAbs; }
+    else vv = num.length && num.every(c => c.unit === "%") ? it.vPct : it.vAbs;
+  }
   const v = valueInterval(vv);
   if (!v || !num.length) return {flag:null, ref:show(cls)};
   const normal = num.filter(c => c.cat !== "abn"), abn = num.filter(c => c.cat === "abn");
@@ -1381,12 +1466,12 @@ function applyRefs(items, patient){
       }
     }
     if (/\d/.test(it.v)){
-      const num = it.v.replace(/^[<>≤≥]/, "").replace(/[.]/g, "\\.").split(" ")[0];
+      const num = it.v.replace(/^[<>≤≥]/, "").split(" ")[0].replace(/[.,]/g, "[.,]");   // "11,8" também acha "11.8" (laudo com ponto decimal)
       const cmp = /^[<>≤≥]/.test(it.v) ? "[" + it.v[0] + "]\\s*" : "";
       const re = new RegExp("(?<![\\d.,])" + cmp + num + "(?![\\d])", "g"); re.lastIndex = start;
       m = re.exec(b);
     } else {
-      const re = /(nao reagente|reagente|nao detectad\w*|indetectave\w*|detectad\w*|negativ\w*|positiv\w*|ausentes?(?:\s*\(s\))?|presentes?(?:\s*\(s\))?|indeterminad\w*|inconclusiv\w*|tracos|rar[oa]s?|alguns|algumas|frequentes|numeros\w*|\+{1,4}|[a-z]+(?: [a-z]+)?)/g;
+      const re = /(negativ[oa] para (?:helmintos|protozoarios)(?: e (?:helmintos|protozoarios))?|nao reagente|reagente|nao detectad\w*|indetectave\w*|detectad\w*|negativ\w*|positiv\w*|ausentes?(?:\s*\(s\))?|presentes?(?:\s*\(s\))?|indeterminad\w*|inconclusiv\w*|tracos|rar[oa]s?|alguns|algumas|frequentes|numeros\w*|\+{1,4}|[a-z]+(?: [a-z]+)?)/g;
       re.lastIndex = start; m = re.exec(b);
     }
     if (!m) continue;
@@ -1411,7 +1496,7 @@ function applyRefs(items, patient){
   for (const [s, its] of groups){
     const e = bounds.find(b => b > Math.max(...its.map(x => Math.max(x.ni, x.vi)))) ?? L.length;
     // 3) cláusulas do bloco, com o contexto de idade/sexo das linhas soltas ("Masculino:", "Acima de 19 anos:")
-    let ctx = {}, ageTable = false;
+    let ctx = {}, ageTable = false, sexSec = null;
     const all = [];
     const nameLines = new Set();
     // cabeçalho de lista de referência ("Estimativa da Taxa de Filtração Glomerular, eTFG:") não conta como nome de exame
@@ -1428,6 +1513,9 @@ function applyRefs(items, patient){
           continue;
         }
         c.q = {...ctx, ...c.q};
+        // "Feminino:15 a 19 anos:0,5 a 0,8" seguido de "Acima de 19 anos:0,6 a 1,2": a linha de baixo é do mesmo sexo
+        if (sexSec && !c.q.sex && sexSec.li === li - 1 && /^\s*(?:acima d[eo]s?|a partir d[eo]s?|superior a|maiores de)\s*\d+\s*anos/.test(norm(ln))) c.q.sex = sexSec.sex;
+        if (c.q.sex && /^\s*(?:sexo\s+)?(?:masculino|feminino|homens?|mulheres?)\s*:\s*\d/.test(norm(ln))) sexSec = {sex:c.q.sex, li};
         all.push(c);
       }
     }
@@ -1482,6 +1570,7 @@ function applyRefs(items, patient){
         if (c.unit && it.unit && c.unit !== it.unit && !(c.unit.includes(it.unit) || it.unit.includes(c.unit))) return false;
         return true;
       });
+      if (it.colOnly){ it.flag = null; it.ref = null; continue; }   // valor alinhado por coluna no texto simples: a referência embaralha
       const r = judge(it, cls);
       it.flag = r.flag; it.ref = r.ref || null;
     }
@@ -1593,65 +1682,77 @@ function framingham2008(o){
             + (o.tab ? c.smk : 0) + (o.dm ? c.dm : 0);
   return 100 * (1 - Math.pow(c.s0, Math.exp(sum - c.mean)));
 }
-// Monta os escores aplicáveis: cada um traz valores usados, o que falta, resultado e texto para a linha
-function computeScores(items, pt, inp){
-  const v = scoreInputs(items), out = [];
+// Campos de laboratório que os escores usam (manual = digitado na seção Escores; vale mais que o laudo)
+const SC_FIELDS = {
+  cr:{lb:"Cr", d:2, ok:x => x < 25}, bt:{lb:"BT", d:2, ok:x => x < 60}, inr:{lb:"INR", d:2, ok:x => x < 15},
+  na:{lb:"Na", d:0, ok:x => x > 90 && x < 200}, alb:{lb:"Alb", d:1, ok:x => x < 10},
+  ast:{lb:"TGO", d:0}, alt:{lb:"TGP", d:0}, plt:{lb:"Plaq", d:0, ok:x => x >= 1 && x <= 2000},
+  ct:{lb:"CT", d:0, ok:x => x > 40 && x < 1000}, hdl:{lb:"HDL", d:0, ok:x => x > 5 && x < 300}
+};
+function scoreValues(items, man){
+  const rep = scoreInputs(items), v = {}, src = {};
+  for (const k of Object.keys(SC_FIELDS)){
+    const m = man ? man[k] : null;
+    if (m !== null && m !== undefined){
+      let x = m; if (k === "plt" && x >= 1000) x = x / 1000;   // 148.000 ou 148 → 148 mil/mm³
+      v[k] = x > 0 && (!SC_FIELDS[k].ok || SC_FIELDS[k].ok(x)) ? x : null; src[k] = "manual";
+    } else { v[k] = rep[k] || null; src[k] = v[k] ? "laudo" : null; }
+  }
+  return {v, src, rep};
+}
+// Categoria do Framingham (escore de risco global, SBC 2017): <5% baixo; intermediário até 20% (homens) ou 10% (mulheres); acima, alto
+function framCat(r, female){ return r < 5 ? "Baixo" : r <= (female ? 10 : 20) ? "Intermediário" : "Alto"; }
+// Monta os 5 escores: cada um traz os campos que usa, o que falta, resultado e texto para a linha
+function computeScores(items, pt, inp, man){
+  const {v, src} = scoreValues(items, man || {}), out = [];
   const age = pt.age === null || pt.age === undefined || isNaN(pt.age) ? null : Math.floor(pt.age);
   const sex = pt.sex === "M" || pt.sex === "F" ? pt.sex : null, female = sex === "F";
   const n = (x, d) => x === null || x === undefined ? null : fmtN(x, d);
-  const base = (id, name, short, used, missing) => ({id, name, short, used, missing: missing.filter(Boolean), complete:false, value:null, unit:"", cls:null, alt:false, note:null, line:null});
+  const lab = ks => ks.filter(k => !v[k]).map(k => SC_FIELDS[k].lb);
+  const base = (id, name, short, fields, missing) => ({id, name, short, fields, src, used: fields.map(k => [SC_FIELDS[k].lb, k === "plt" && v[k] ? Math.round(v[k] * 1000).toLocaleString("pt-BR") : n(v[k], SC_FIELDS[k].d)]),
+    missing: missing.filter(Boolean), complete:false, value:null, unit:"", cls:null, alt:false, note:null, line:null});
   // CKD-EPI 2021: creatinina + idade (adulto) + sexo
-  if (v.cr){
-    const s = base("ckd", "CKD-EPI 2021", "TFG", [["Cr", n(v.cr, 2)], ["Idade", age], ["Sexo", sex]], [age === null && "idade", !sex && "sexo"]);
+  { const s = base("ckd", "CKD-EPI 2021", "CKD-EPI", ["cr"], [...lab(["cr"]), age === null && "idade", !sex && "sexo"]);
     if (age !== null && age < 18) s.note = "Validada para adultos (18 anos ou mais).";
     else if (!s.missing.length){
       const g = Math.round(ckdEpi2021(v.cr, age, female));
       Object.assign(s, {complete:true, value:String(g), unit:"mL/min/1,73 m²", cls: g >= 90 ? "G1" : g >= 60 ? "G2" : g >= 45 ? "G3a" : g >= 30 ? "G3b" : g >= 15 ? "G4" : "G5", alt: g < 60, line:"TFG " + g});
     }
-    out.push(s);
-  }
+    out.push(s); }
   // FIB-4: idade + TGO + TGP + plaquetas
-  if (v.ast && v.alt && v.plt){
-    const s = base("fib4", "FIB-4", "FIB-4", [["Idade", age], ["TGO", n(v.ast, 0)], ["TGP", n(v.alt, 0)], ["Plaq", Math.round(v.plt * 1000).toLocaleString("pt-BR")]], [age === null && "idade"]);
+  { const s = base("fib4", "FIB-4", "FIB-4", ["ast", "alt", "plt"], [...lab(["ast", "alt", "plt"]), age === null && "idade"]);
     if (!s.missing.length){
       const f = fib4(age, v.ast, v.alt, v.plt), r = Math.round(f * 100) / 100;
       Object.assign(s, {complete:true, value:fmtN(r, 2), cls: r < 1.45 ? "Baixo" : r <= 3.25 ? "Indeterminado" : "Alto", alt: r > 3.25, line:"FIB-4 " + fmtN(r, 2)});
     }
-    out.push(s);
-  }
+    out.push(s); }
   // MELD 3.0: bilirrubina + INR + creatinina + sódio + albumina + sexo (+ diálise)
-  if (v.bt && v.inr && v.cr && v.na && v.alb){
-    const s = base("meld", "MELD 3.0", "MELD 3.0", [["BT", n(v.bt, 2)], ["INR", n(v.inr, 2)], ["Cr", n(v.cr, 2)], ["Na", n(v.na, 0)], ["Alb", n(v.alb, 1)], ["Sexo", sex]], [!sex && "sexo"]);
+  { const s = base("meld", "MELD 3.0", "MELD 3.0", ["bt", "inr", "cr", "na", "alb"], [...lab(["bt", "inr", "cr", "na", "alb"]), !sex && "sexo"]);
     s.ask = ["dial"];
     if (!s.missing.length){
       const m = Math.round(meld3({bt:v.bt, inr:v.inr, cr:v.cr, na:v.na, alb:v.alb, female, dial:inp.dial}));
       Object.assign(s, {complete:true, value:String(m), line:"MELD 3.0 " + m});
     }
-    out.push(s);
-  }
-  // Child-Pugh: bilirrubina + albumina + INR (laudo) + ascite + encefalopatia (você)
-  if (v.bt && v.alb && v.inr){
-    const s = base("child", "Child-Pugh", "Child", [["BT", n(v.bt, 2)], ["Alb", n(v.alb, 1)], ["INR", n(v.inr, 2)]], [inp.ascite === null && "ascite", inp.ence === null && "encefalopatia"]);
+    out.push(s); }
+  // Child-Pugh: bilirrubina + albumina + INR + ascite + encefalopatia
+  { const s = base("child", "Child-Pugh", "Child-Pugh", ["bt", "alb", "inr"], [...lab(["bt", "alb", "inr"]), inp.ascite === null && "ascite", inp.ence === null && "encefalopatia"]);
     s.ask = ["ascite", "ence"];
     if (!s.missing.length){
       const c = childPugh({bt:v.bt, alb:v.alb, inr:v.inr, ascite:inp.ascite, ence:inp.ence});
       Object.assign(s, {complete:true, value:c.cls, unit:"(" + c.pts + ")", cls:"Classe " + c.cls, alt: c.cls !== "A", line:"Child-Pugh " + c.cls + " (" + c.pts + ")"});
     }
-    out.push(s);
-  }
-  // Framingham 2008: idade + sexo + CT + HDL (laudo) + PAS, tratamento de HAS, tabagismo, diabetes (você)
-  if (v.ct && v.hdl){
-    const s = base("fram", "Framingham", "Framingham", [["Idade", age], ["Sexo", sex], ["CT", n(v.ct, 0)], ["HDL", n(v.hdl, 0)]],
-      [age === null && "idade", !sex && "sexo", !(inp.pas > 0) && "PAS", inp.has === null && "HAS", inp.tab === null && "tabagismo", inp.dm === null && "diabetes"]);
+    out.push(s); }
+  // Framingham 2008: idade + sexo + CT + HDL + PAS, tratamento de HAS, tabagismo, diabetes
+  { const s = base("fram", "Framingham", "Framingham", ["ct", "hdl"],
+      [...lab(["ct", "hdl"]), age === null && "idade", !sex && "sexo", !(inp.pas > 0) && "PAS", inp.has === null && "HAS", inp.tab === null && "tabagismo", inp.dm === null && "diabetes"]);
     s.ask = ["pas", "has", "tab", "dm"];
     if (age !== null && (age < 30 || age > 74)) s.note = "Validado para 30 a 74 anos.";
     else if (inp.pas > 0 && (inp.pas < 70 || inp.pas > 260)) s.note = "PAS fora do esperado.";
     else if (!s.missing.length){
-      const r = framingham2008({age, female, ct:v.ct, hdl:v.hdl, pas:inp.pas, has:inp.has, tab:inp.tab, dm:inp.dm});
-      Object.assign(s, {complete:true, value:fmtN(r, 1), unit:"%", line:"Framingham " + fmtN(r, 1) + "%"});
+      const r = framingham2008({age, female, ct:v.ct, hdl:v.hdl, pas:inp.pas, has:inp.has, tab:inp.tab, dm:inp.dm}), c = framCat(Math.round(r * 10) / 10, female);
+      Object.assign(s, {complete:true, value:fmtN(r, 1), unit:"%", cls:c, alt: c === "Alto", line:"Framingham " + fmtN(r, 1) + "% (" + c.toLowerCase() + ")"});
     }
-    out.push(s);
-  }
+    out.push(s); }
   return out;
 }
 // PARSER-END
@@ -1670,8 +1771,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.26-1";
-const BUILD_HASH = "609bd34668098712834435843387162148f17ba2efd51311616a5e25ca4b051e";
+const APP_VERSION = "2026.10.26-2";
+const BUILD_HASH = "dfda51fdce60f0271026489973e7f3831b8d614c6cc92caab93e9eaba3e9622c";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -1719,7 +1820,7 @@ let items = [];
 let manual = new Map();   // escolhas feitas neste laudo para valores suspeitos
 let patient = {key:null, name:null, dateFull:null};
 // células imaturas e atípicos zerados ficam fora da linha por padrão (dá para marcar)
-const ZERO_OFF = new Set(["Blastos","Promielócitos","Mielócitos","Metamielócitos","Atíp"]);
+const ZERO_OFF = new Set(["Blastos","Mieloblastos","Promielócitos","Mielócitos","Metamielócitos","Atíp"]);
 const zeroOff = it => ZERO_OFF.has(it.ab) && toNum(it.v) === 0;
 const isOn = it => manual.has(it.key) ? manual.get(it.key) : (!state.off.includes(it.key) && !it.suspect && !zeroOff(it));
 
@@ -1727,7 +1828,7 @@ function extract(){
   const text = $("src").value;
   items = text.trim() ? parse(text, state.diff) : [];
   manual = new Map();
-  scIn = {...SC_INPUT_DEFAULT}; scBuilt = ""; $("escd").open = false;   // escores: entradas valem só para este laudo; seção sempre começa recolhida
+  scIn = {...SC_INPUT_DEFAULT}; scMan = {}; scBuilt = ""; $("escd").open = false;   // escores: entradas valem só para este laudo; seção sempre começa recolhida
   const p = text.trim() ? patientFrom(text) : {age:null, sex:null, name:null, key:null};
   if (p.age !== null) $("age").value = String(Math.floor(p.age));
   if (p.sex) $("sex").value = p.sex;
@@ -1978,7 +2079,7 @@ function render(){
   renderHist();
 }
 // ---------- escores ----------
-let scIn = {...SC_INPUT_DEFAULT}, scores = [], scBuilt = "";
+let scIn = {...SC_INPUT_DEFAULT}, scMan = {}, scores = [], scBuilt = "";
 function scPatient(){
   const a = parseFloat(($("age").value || "").replace(",", "."));
   return {age: isNaN(a) ? null : a, sex: $("sex").value || null};
@@ -1995,8 +2096,25 @@ function buildScoreCards(){
   const g = $("esc-grid"); g.innerHTML = "";
   for (const s of scores){
     const c = document.createElement("div"); c.className = "sc"; c.dataset.id = s.id;
-    c.innerHTML = '<div class="sc-top"><span class="sc-nm"></span><span class="sc-vl"></span></div><span class="sc-pill" hidden></span><div class="sc-ins"></div>';
+    c.innerHTML = '<div class="sc-top"><span class="sc-nm"></span><span class="sc-vl"></span></div><span class="sc-pill" hidden></span><div class="sc-fl"></div>';
     c.querySelector(".sc-nm").textContent = s.name;
+    const fl = c.querySelector(".sc-fl");
+    for (const k of s.fields){
+      const F = SC_FIELDS[k], l = document.createElement("label"); l.className = "sc-f";
+      const b = document.createElement("b"); b.textContent = F.lb;
+      const inp = document.createElement("input"); inp.className = "sc-in"; inp.inputMode = "decimal"; inp.dataset.k = k; inp.placeholder = "—";
+      inp.setAttribute("aria-label", F.lb + (k === "plt" ? " (mil/mm³)" : ""));
+      const tag = document.createElement("span"); tag.className = "sc-lab"; tag.textContent = "laudo"; tag.hidden = true;
+      inp.addEventListener("input", () => {
+        const x = parseFloat(inp.value.replace(/\.(?=\d{3}\b)/g, "").replace(",", "."));
+        scMan[k] = inp.value.trim() === "" ? null : (isNaN(x) ? 0 : x);   // vazio: volta ao valor do laudo, se houver
+        if (scMan[k] === null) delete scMan[k];
+        for (const o of $("esc-grid").querySelectorAll('.sc-in[data-k="' + k + '"]')) if (o !== inp) o.value = inp.value;
+        updateScores();
+      });
+      inp.addEventListener("blur", () => updateScores());   // ao sair do campo vazio, volta o valor do laudo
+      l.append(b, inp, tag); fl.append(l);
+    }
     if (s.ask && s.ask.length){
       const ask = document.createElement("div"); ask.className = "sc-ask";
       for (const k of s.ask){
@@ -2029,9 +2147,9 @@ function buildScoreCards(){
   }
 }
 function updateScores(){
-  scores = computeScores(items, scPatient(), scIn);
-  const box = $("escd");
-  box.hidden = !scores.length;
+  scores = computeScores(items, scPatient(), scIn, scMan);
+  { const a = $("sc-age"); if (document.activeElement !== a) a.value = $("age").value;
+    for (const r of document.querySelectorAll('input[name="sc-sex"]')) r.checked = r.value === $("sex").value; }
   const ids = scores.map(s => s.id).join();
   if (ids !== scBuilt){ buildScoreCards(); scBuilt = ids; }
   const sum = $("esc-sum"); sum.innerHTML = "";
@@ -2041,17 +2159,23 @@ function updateScores(){
     const vl = c.querySelector(".sc-vl"); vl.textContent = s.complete ? s.value + " " : "—";
     if (s.complete && s.unit){ const u = document.createElement("small"); u.textContent = s.unit; vl.append(u); }
     const pill = c.querySelector(".sc-pill"); pill.hidden = !(s.complete && s.cls); pill.textContent = s.cls || ""; pill.classList.toggle("al", !!s.alt);
-    const ins = c.querySelector(".sc-ins"); ins.innerHTML = "";
-    for (const [k, v] of s.used){ const sp = document.createElement("span"); const b = document.createElement("b"); b.textContent = v === null || v === undefined ? "?" : v; sp.append(k + " ", b); ins.append(sp); }
-    c.querySelector(".sc-miss").textContent = s.note ? s.note : s.missing.length ? "Falta: " + s.missing.join(", ") + (s.missing.some(x => x === "idade" || x === "sexo") ? " (preencha acima)" : "") : "";
+    s.fields.forEach((k, i) => {
+      const inp = c.querySelector('.sc-in[data-k="' + k + '"]'); if (!inp) return;
+      const fromLab = s.src[k] === "laudo";
+      if (document.activeElement !== inp && !(k in scMan)) inp.value = fromLab ? s.used[i][1] : "";
+      inp.nextElementSibling.hidden = !fromLab || (k in scMan);
+    });
+    c.querySelector(".sc-miss").textContent = s.note ? s.note : s.missing.length ? "Falta: " + s.missing.join(", ") : "";
     const chip = document.createElement("span");
-    if (s.complete){ const b = document.createElement("b"); b.textContent = s.id === "child" ? s.value : s.value + (s.unit === "%" ? "%" : ""); chip.append(s.short + " ", b); if (s.alt) chip.className = "al"; }
-    else { chip.textContent = s.short + " —"; chip.className = "pend"; }
+    if (s.complete){ const b = document.createElement("b"); b.textContent = (s.id === "child" ? s.value : s.value + (s.unit === "%" ? "%" : "")) + (s.id === "fram" ? " " + s.cls : ""); chip.append(s.short + " ", b); if (s.alt) chip.className = "al"; }
+    else { chip.textContent = s.short; chip.className = "pend"; }
     sum.append(chip);
   }
   output();
 }
 $("o-escline").addEventListener("change", e => { state.escLine = e.target.checked; save(); output(); });
+$("sc-age").addEventListener("input", e => { $("age").value = e.target.value; $("age").dispatchEvent(new Event("input")); });
+for (const r of document.querySelectorAll('input[name="sc-sex"]')) r.addEventListener("change", () => { if (r.checked){ $("sex").value = r.value; $("sex").dispatchEvent(new Event("change")); } });
 // Monta a linha: exames um a um; urina, gram e gasometria em blocos; frações agrupadas e valor anterior conforme as opções
 const LINE_AB = {"R TP":"R", "R TTPA":"R"};   // na linha, a relação sai só como "R", logo depois do TP/TTPA
 function buildLine(sel){
@@ -2150,8 +2274,9 @@ function output(){
   const h = state.upper ? head.toUpperCase() : head;
   const scLine = state.escLine ? scores.filter(s => s.complete).map(s => s.line) : [];
   const scTxt = scLine.length ? "\n\n" + esc((state.upper ? "ESCORES: " : "Escores: ") + (state.upper ? scLine.map(x => x.toUpperCase()) : scLine).join(state.sep)) : "";
-  $("out").innerHTML = sel.length ? (h ? esc(h) + ": " : "") + buildLine(sel) + scTxt : "";
-  $("copy").disabled = !sel.length;
+  // sem exame selecionado, a linha pode ter só os escores (preenchidos à mão)
+  $("out").innerHTML = sel.length ? (h ? esc(h) + ": " : "") + buildLine(sel) + scTxt : scTxt ? scTxt.replace(/^\n\n/, "") : "";
+  $("copy").disabled = !sel.length && !scTxt;
   $("copy").textContent = "Copiar";
 }
 
