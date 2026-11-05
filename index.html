@@ -55,6 +55,24 @@ details.escd[open] .esc-chev{transform:rotate(180deg)}
 .sc-in:focus{outline:none}.sc-f:focus-within{border-color:var(--accent)}
 .sc-lab{font-size:.68rem;padding:0 4px;border-radius:4px;color:var(--accent);border:1px solid var(--accent)}
 .sc-lab[hidden]{display:none}
+.sc[data-id="prev"]{container-type:inline-size}
+.sc-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:8px;margin-top:8px;--rk:#a46f00;--rkb:#c88a00;--rkf:#f0a50022}
+.sc-hero[hidden],.sc-nhdl:empty{display:none}
+.sc-hero>div{border-radius:9px;padding:8px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.sc-hero .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sc-hero .v{font-size:clamp(.95rem, calc((54cqi - 24px) / 7.6), 1.5rem);font-weight:750;line-height:1.15;white-space:nowrap}
+.sc-cat{background:var(--rkf);border:1px solid var(--rkb)}.sc-cat .v{color:var(--rk)}
+.sc-meta{background:#2563eb1f;border:1px solid #2563eb}.sc-meta .v{color:#2563eb}
+.sc-meta .now{font-size:.78rem;color:var(--muted)}.sc-meta .now .up{color:var(--alt)}.sc-meta .now .ok{color:#15803d}
+.sc-nhdl{font-size:.78rem;color:var(--muted);margin-top:4px}
+[data-cat="baixo"]{--rk:#15803d;--rkb:#16a34a;--rkf:#16a34a22}
+[data-cat="inter"]{--rk:#a46f00;--rkb:#c88a00;--rkf:#f0a50022}
+[data-cat="alto"]{--rk:#c2410c;--rkb:#ea580c;--rkf:#ea580c22}
+[data-cat="muito"]{--rk:#b91c1c;--rkb:#dc2626;--rkf:#dc262622}
+[data-cat="extremo"]{--rk:#6d28d9;--rkb:#7c3aed;--rkf:#7c3aed22}
+.esc-sum span.rk{color:var(--rk);border-color:var(--rkb);background:var(--rkf)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) [data-cat="baixo"]{--rk:#4ade80}:root:not([data-theme="light"]) [data-cat="inter"]{--rk:#fbbf24}:root:not([data-theme="light"]) [data-cat="alto"]{--rk:#fb923c}:root:not([data-theme="light"]) [data-cat="muito"]{--rk:#f87171}:root:not([data-theme="light"]) [data-cat="extremo"]{--rk:#c4b5fd}:root:not([data-theme="light"]) .sc-meta .v{color:#93c5fd}:root:not([data-theme="light"]) .sc-meta .now .ok{color:#4ade80}}
+:root[data-theme="dark"] [data-cat="baixo"]{--rk:#4ade80}:root[data-theme="dark"] [data-cat="inter"]{--rk:#fbbf24}:root[data-theme="dark"] [data-cat="alto"]{--rk:#fb923c}:root[data-theme="dark"] [data-cat="muito"]{--rk:#f87171}:root[data-theme="dark"] [data-cat="extremo"]{--rk:#c4b5fd}:root[data-theme="dark"] .sc-meta .v{color:#93c5fd}:root[data-theme="dark"] .sc-meta .now .ok{color:#4ade80}
 .sw{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);cursor:pointer;position:relative}
 .sw input{position:absolute;opacity:0;width:34px;height:20px;margin:0;cursor:pointer}
 .sw i{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;display:inline-block;transition:background .15s}
@@ -62,7 +80,7 @@ details.escd[open] .esc-chev{transform:rotate(180deg)}
 .sw input:checked+i{background:var(--accent)}
 .sw input:checked+i::after{left:16px}
 .sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
-.esc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px;margin-top:10px}
+.esc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr));gap:10px;margin-top:10px}
 .sc{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:12px;min-width:0}
 .sc.wait{border-style:dashed}
 .sc-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -73,7 +91,7 @@ details.escd[open] .esc-chev{transform:rotate(180deg)}
 .sc-pill.al{color:var(--alt);border-color:var(--alt)}
 .sc-pill[hidden],.sc-miss:empty{display:none}
 .sc-ask{margin-top:10px;display:grid;gap:7px}
-.sc-q{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem}
+.sc-q{display:flex;justify-content:space-between;align-items:center;gap:6px 8px;font-size:.85rem;flex-wrap:wrap}
 .sc-sg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:none}
 .sc-sg label{position:relative;padding:4px 9px;font-size:.78rem;font-weight:650;color:var(--muted);white-space:nowrap;cursor:pointer}
 .sc-sg input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
@@ -1643,9 +1661,10 @@ function runEmbeddedTests(){
 }
 // ================= Escores (calculados pelo app a partir dos exames lidos) =================
 // Fontes: CKD-EPI 2021 (Inker, NEJM 2021); MELD 3.0 (Kim, Gastroenterology 2021); FIB-4 (Sterling, Hepatology 2006);
-// Child-Pugh (Pugh 1973, versão com INR); Framingham 2008 (D'Agostino, Circulation 2008 — risco CV geral em 10 anos).
+// Child-Pugh (Pugh 1973, versão com INR); PREVENT-ASCVD 10 anos (Khan, Circulation 2024), categorias e metas da
+// Diretriz Brasileira de Dislipidemias 2025 (SBC, Arq Bras Cardiol 2025;122(9):e20250640). Framingham 2008 fica só como referência.
 // Só calcula com valores lidos com segurança (sem "<"/">", sem valor fora do possível) e nas unidades esperadas.
-const SC_INPUT_DEFAULT = {dial:false, ascite:null, ence:null, pas:null, has:null, tab:null, dm:null};
+const SC_INPUT_DEFAULT = {dial:false, ascite:null, ence:null, pas:null, has:null, tab:null, dm:null, stat:null, cond:null};
 function scoreInputs(items){
   const val = (ab, ok) => {
     const it = items.find(x => x.ab === ab && x.cat !== "urina" && !String(x.cat).startsWith("gaso"));
@@ -1664,7 +1683,8 @@ function scoreInputs(items){
     cr: cr && cr.x, ast: val("TGO") && val("TGO").x, alt: val("TGP") && val("TGP").x, plt: pltK,
     bt: val("BT", x => x < 60) && val("BT").x, inr: val("INR", x => x < 15) && val("INR").x,
     na: val("Na", x => x > 90 && x < 200) && val("Na").x, alb: val("Alb", x => x < 10) && val("Alb").x,
-    ct: val("CT", x => x > 40 && x < 1000) && val("CT").x, hdl: val("HDL", x => x > 5 && x < 300) && val("HDL").x
+    ct: val("CT", x => x > 40 && x < 1000) && val("CT").x, hdl: val("HDL", x => x > 5 && x < 300) && val("HDL").x,
+    egfr: val("TFG", x => x >= 5 && x < 200) && val("TFG").x, ldl: val("LDL", x => x > 5 && x < 1000) && val("LDL").x
   };
 }
 const fmtN = (x, d) => x.toFixed(d).replace(".", ",");
@@ -1697,9 +1717,10 @@ const SC_FIELDS = {
   cr:{lb:"Cr", d:2, ok:x => x < 25}, bt:{lb:"BT", d:2, ok:x => x < 60}, inr:{lb:"INR", d:2, ok:x => x < 15},
   na:{lb:"Na", d:0, ok:x => x > 90 && x < 200}, alb:{lb:"Alb", d:1, ok:x => x < 10},
   ast:{lb:"TGO", d:0}, alt:{lb:"TGP", d:0}, plt:{lb:"Plaq", d:0, ok:x => x >= 1 && x <= 2000},
-  ct:{lb:"CT", d:0, ok:x => x > 40 && x < 1000}, hdl:{lb:"HDL", d:0, ok:x => x > 5 && x < 300}
+  ct:{lb:"CT", d:0, ok:x => x > 40 && x < 1000}, hdl:{lb:"HDL", d:0, ok:x => x > 5 && x < 300},
+  egfr:{lb:"TFG", d:0, ok:x => x >= 5 && x < 200}, ldl:{lb:"LDL", d:0, ok:x => x > 5 && x < 1000}
 };
-function scoreValues(items, man){
+function scoreValues(items, man, pt){
   const rep = scoreInputs(items), v = {}, src = {};
   for (const k of Object.keys(SC_FIELDS)){
     const m = man ? man[k] : null;
@@ -1708,13 +1729,32 @@ function scoreValues(items, man){
       v[k] = x > 0 && (!SC_FIELDS[k].ok || SC_FIELDS[k].ok(x)) ? x : null; src[k] = "manual";
     } else { v[k] = rep[k] || null; src[k] = v[k] ? "laudo" : null; }
   }
+  // TFG para o PREVENT: sem TFG numérica no laudo, usa a CKD-EPI 2021 calculada com a creatinina
+  if (!v.egfr && v.cr && pt && pt.age >= 18 && (pt.sex === "M" || pt.sex === "F")){ v.egfr = Math.round(ckdEpi2021(v.cr, Math.floor(pt.age), pt.sex === "F")); src.egfr = "calc"; }
   return {v, src, rep};
 }
-// Categoria do Framingham (escore de risco global, SBC 2017): <5% baixo; intermediário até 20% (homens) ou 10% (mulheres); acima, alto
+// Categoria do Framingham (escore de risco global, SBC 2017) — mantida só como referência
 function framCat(r, female){ return r < 5 ? "Baixo" : r <= (female ? 10 : 20) ? "Intermediário" : "Alto"; }
+// PREVENT-ASCVD em 10 anos, modelo base (Khan SS et al., Circulation 2024;149:430). Conferido com o exemplo da Tabela S25 (9,2%).
+function preventAscvd(o){
+  const a = (Math.min(79, Math.max(30, o.age)) - 55) / 10, nh = (o.ct - o.hdl) * 0.02586 - 3.5, h = (o.hdl * 0.02586 - 1.3) / 0.3;
+  const sL = (Math.min(o.pas, 110) - 110) / 20, sH = (Math.max(o.pas, 110) - 130) / 20, eL = (Math.min(o.egfr, 60) - 60) / -15, eH = (Math.max(o.egfr, 60) - 90) / -15;
+  const dm = o.dm ? 1 : 0, sm = o.tab ? 1 : 0, bp = o.has ? 1 : 0, st = o.stat ? 1 : 0;
+  const F = [-3.819975, 0.719883, 0.1176967, -0.151185, -0.0835358, 0.3592852, 0.8348585, 0.4831078, 0.4864619, 0.0397779, 0.2265309, -0.0592374, -0.0395762, 0.0844423, -0.0567839, 0.0325692, -0.1035985, -0.2417542, -0.0791142, -0.1671492];
+  const M = [-3.500655, 0.7099847, 0.1658663, -0.1144285, -0.2837212, 0.3239977, 0.7189597, 0.3956973, 0.3690075, 0.0203619, 0.2036522, -0.0865581, -0.0322916, 0.114563, -0.0300005, 0.0232747, -0.0927024, -0.2018525, -0.0970527, -0.1217081];
+  const c = o.female ? F : M, x = [1, a, nh, h, sL, sH, dm, sm, eL, eH, bp, st, bp * sH, st * nh, a * nh, a * h, a * sH, a * dm, a * sm, a * eL];
+  const lo = x.reduce((t, v, i) => t + v * c[i], 0);
+  return 100 / (1 + Math.exp(-lo));
+}
+// Diretriz SBC 2025: PREVENT <5% baixo, 5 a <20% intermediário, ≥20% alto; muito alto e extremo vêm da clínica. Metas de LDL-c e não-HDL-c.
+const SBC_CAT = {
+  baixo:{lb:"Baixo", ldl:115, nhdl:145, r:0}, inter:{lb:"Intermediário", ldl:100, nhdl:130, r:1}, alto:{lb:"Alto", ldl:70, nhdl:100, r:2},
+  muito:{lb:"Muito alto", ldl:50, nhdl:80, r:3}, extremo:{lb:"Extremo", ldl:40, nhdl:70, r:4}
+};
+function preventCat(r){ return r < 5 ? "baixo" : r < 20 ? "inter" : "alto"; }
 // Monta os 5 escores: cada um traz os campos que usa, o que falta, resultado e texto para a linha
 function computeScores(items, pt, inp, man){
-  const {v, src} = scoreValues(items, man || {}), out = [];
+  const {v, src} = scoreValues(items, man || {}, pt), out = [];
   const age = pt.age === null || pt.age === undefined || isNaN(pt.age) ? null : Math.floor(pt.age);
   const sex = pt.sex === "M" || pt.sex === "F" ? pt.sex : null, female = sex === "F";
   const n = (x, d) => x === null || x === undefined ? null : fmtN(x, d);
@@ -1752,15 +1792,23 @@ function computeScores(items, pt, inp, man){
       Object.assign(s, {complete:true, value:c.cls, unit:"(" + c.pts + ")", cls:"Classe " + c.cls, alt: c.cls !== "A", line:"Child-Pugh " + c.cls + " (" + c.pts + ")"});
     }
     out.push(s); }
-  // Framingham 2008: idade + sexo + CT + HDL + PAS, tratamento de HAS, tabagismo, diabetes
-  { const s = base("fram", "Framingham", "Framingham", ["ct", "hdl"],
-      [...lab(["ct", "hdl"]), age === null && "idade", !sex && "sexo", !(inp.pas > 0) && "PAS", inp.has === null && "HAS", inp.tab === null && "tabagismo", inp.dm === null && "diabetes"]);
-    s.ask = ["pas", "has", "tab", "dm"];
-    if (age !== null && (age < 30 || age > 74)) s.note = "Validado para 30 a 74 anos.";
-    else if (inp.pas > 0 && (inp.pas < 70 || inp.pas > 260)) s.note = "PAS fora do esperado.";
-    else if (!s.missing.length){
-      const r = framingham2008({age, female, ct:v.ct, hdl:v.hdl, pas:inp.pas, has:inp.has, tab:inp.tab, dm:inp.dm}), c = framCat(Math.round(r * 10) / 10, female);
-      Object.assign(s, {complete:true, value:fmtN(r, 1), unit:"%", cls:c, alt: c === "Alto", line:"Framingham " + fmtN(r, 1) + "% (" + c.toLowerCase() + ")"});
+  // PREVENT (SBC 2025): idade 30–79 + sexo + CT + HDL + TFG + PAS, HAS tratada, tabagismo, diabetes, estatina; condição clínica pode subir a categoria
+  { const s = base("prev", "PREVENT · SBC 2025", "PREVENT", ["ct", "hdl", "egfr", "ldl"],
+      [...lab(["ct", "hdl", "egfr"]), age === null && "idade", !sex && "sexo", !(inp.pas > 0) && "PAS", inp.has === null && "HAS", inp.tab === null && "tabagismo", inp.dm === null && "diabetes", inp.stat === null && "estatina"]);
+    s.ask = ["pas", "has", "tab", "dm", "stat", "cond"]; s.optional = ["ldl"];
+    let calc = null;
+    if (age !== null && (age < 30 || age > 79)) s.note = "PREVENT validado para 30 a 79 anos.";
+    else if (inp.pas > 0 && (inp.pas < 90 || inp.pas > 200)) s.note = "PAS fora da faixa do PREVENT (90 a 200).";
+    else if (!s.missing.length) calc = preventAscvd({age, female, ct:v.ct, hdl:v.hdl, pas:inp.pas, egfr:v.egfr, has:inp.has, tab:inp.tab, dm:inp.dm, stat:inp.stat});
+    const kc = calc === null ? null : preventCat(Math.round(calc * 10) / 10), kk = inp.cond && SBC_CAT[inp.cond] ? inp.cond : null;
+    // vale a mais alta entre o cálculo e a condição clínica; "alto" pela clínica já é o teto do cálculo
+    const k = kc && kk ? (SBC_CAT[kk].r >= SBC_CAT[kc].r ? kk : kc) : kk && SBC_CAT[kk].r >= 2 ? kk : kc;
+    if (k){
+      const C = SBC_CAT[k], pct = calc === null ? null : fmtN(calc, 1);
+      Object.assign(s, {complete:true, value: pct, unit: pct ? "%" : "", cls:C.lb, cat:k, metaLdl:C.ldl, metaNhdl:C.nhdl, alt: C.r >= 2,
+        ldlNow: v.ldl || null, ldlAbove: v.ldl ? v.ldl >= C.ldl : null,
+        line: (pct ? "PREVENT " + pct + "% (" : "Risco ") + C.lb.toLowerCase() + (pct ? "; " : " (") + "meta LDL <" + C.ldl + ")"});
+      if (kk){ s.note = null; if (calc === null) s.missing = []; }   // categoria já definida pela clínica: o que falta só serviria para a %
     }
     out.push(s); }
   return out;
@@ -1781,8 +1829,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.10.31-1";
-const BUILD_HASH = "358008ce2abbd6d598fc889e328d7b7390a3d528e9536dd44649143179cc2f4f";
+const APP_VERSION = "2026.11.04-1";
+const BUILD_HASH = "a29190cc3783327b9d9ea07761ade42ac466fdad47d90dcbd77f49f0bbdcfae4";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -2101,7 +2149,9 @@ const SC_ASK = {
   ence:{label:"Encefalopatia", opts:[["Ausente", 1], ["I–II", 2], ["III–IV", 3]]},
   has:{label:"Trata HAS", opts:[["Não", false], ["Sim", true]]},
   tab:{label:"Tabagismo", opts:[["Não", false], ["Sim", true]]},
-  dm:{label:"Diabetes", opts:[["Não", false], ["Sim", true]]}
+  dm:{label:"Diabetes", opts:[["Não", false], ["Sim", true]]},
+  stat:{label:"Usa estatina", opts:[["Não", false], ["Sim", true]]},
+  cond:{label:"Condição clínica", opts:[["—", null], ["Alto", "alto"], ["Muito alto", "muito"], ["Extremo", "extremo"]]}
 };
 function buildScoreCards(){
   const g = $("esc-grid"); g.innerHTML = "";
@@ -2110,6 +2160,12 @@ function buildScoreCards(){
     c.innerHTML = '<div class="sc-top"><span class="sc-nm"></span><span class="sc-vl"></span></div><span class="sc-pill" hidden></span><div class="sc-fl"></div>';
     c.querySelector(".sc-nm").textContent = s.name;
     const fl = c.querySelector(".sc-fl");
+    if (s.id === "prev"){   // risco e meta de LDL em destaque
+      const h = document.createElement("div"); h.className = "sc-hero";
+      h.innerHTML = '<div class="sc-cat"><span class="k">Risco</span><b class="v"></b></div><div class="sc-meta"><span class="k">Meta LDL</span><b class="v"></b><span class="now"></span></div>';
+      fl.before(h);
+      const nh = document.createElement("div"); nh.className = "sc-nhdl"; h.after(nh);
+    }
     for (const k of s.fields){
       const F = SC_FIELDS[k], l = document.createElement("label"); l.className = "sc-f";
       const b = document.createElement("b"); b.textContent = F.lb;
@@ -2167,18 +2223,34 @@ function updateScores(){
   for (const s of scores){
     const c = $("esc-grid").querySelector('.sc[data-id="' + s.id + '"]'); if (!c) continue;
     c.classList.toggle("wait", !s.complete);
-    const vl = c.querySelector(".sc-vl"); vl.textContent = s.complete ? s.value + " " : "—";
+    const vl = c.querySelector(".sc-vl");
+    if (s.id === "prev"){
+      vl.textContent = ""; if (s.value){ vl.append(s.value + "% "); const u = document.createElement("small"); u.textContent = "em 10 anos"; vl.append(u); } else vl.textContent = s.complete ? "" : "—";
+      const h = c.querySelector(".sc-hero"); h.hidden = !s.complete; h.dataset.cat = s.cat || "";
+      if (s.complete){
+        h.querySelector(".sc-cat .v").textContent = s.cls;
+        h.querySelector(".sc-meta .v").textContent = "< " + s.metaLdl;
+        const now = h.querySelector(".now"); now.textContent = "";
+        if (s.ldlNow){ now.append("atual " + Math.round(s.ldlNow) + " · "); const e = document.createElement("b"); e.textContent = s.ldlAbove ? "acima" : "na meta"; e.className = s.ldlAbove ? "up" : "ok"; now.append(e); }
+      }
+      c.querySelector(".sc-nhdl").textContent = s.complete ? "não-HDL < " + s.metaNhdl : "";
+      c.querySelector(".sc-pill").hidden = true;
+    } else {
+    vl.textContent = s.complete ? s.value + " " : "—";
     if (s.complete && s.unit){ const u = document.createElement("small"); u.textContent = s.unit; vl.append(u); }
     const pill = c.querySelector(".sc-pill"); pill.hidden = !(s.complete && s.cls); pill.textContent = s.cls || ""; pill.classList.toggle("al", !!s.alt);
+    }
     s.fields.forEach((k, i) => {
       const inp = c.querySelector('.sc-in[data-k="' + k + '"]'); if (!inp) return;
-      const fromLab = s.src[k] === "laudo";
+      const fromLab = s.src[k] === "laudo" || s.src[k] === "calc";   // "calc": TFG calculada pela CKD-EPI com a creatinina
       if (document.activeElement !== inp && !(k in scMan)) inp.value = fromLab ? s.used[i][1] : "";
+      inp.nextElementSibling.textContent = s.src[k] === "calc" ? "CKD-EPI" : "laudo";
       inp.nextElementSibling.hidden = !fromLab || (k in scMan);
     });
     c.querySelector(".sc-miss").textContent = s.note ? s.note : s.missing.length ? "Falta: " + s.missing.join(", ") : "";
     const chip = document.createElement("span");
-    if (s.complete){ const b = document.createElement("b"); b.textContent = (s.id === "child" ? s.value : s.value + (s.unit === "%" ? "%" : "")) + (s.id === "fram" ? " " + s.cls : ""); chip.append(s.short + " ", b); if (s.alt) chip.className = "al"; }
+    if (s.complete && s.id === "prev"){ const b = document.createElement("b"); b.textContent = s.cls + " · LDL <" + s.metaLdl; chip.append(s.short + " ", b); chip.className = "rk"; chip.dataset.cat = s.cat; }
+    else if (s.complete){ const b = document.createElement("b"); b.textContent = s.id === "child" ? s.value : s.value + (s.unit === "%" ? "%" : ""); chip.append(s.short + " ", b); if (s.alt) chip.className = "al"; }
     else { chip.textContent = s.short; chip.className = "pend"; }
     sum.append(chip);
   }
