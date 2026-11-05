@@ -199,6 +199,7 @@ details.src li .ref.alt{color:var(--alt)}
 .hrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:7px 0;border-top:1px dashed var(--line);font-size:.85rem}
 .hrow .d{font-variant-numeric:tabular-nums;color:var(--muted)}
 .hrow .l{overflow-wrap:anywhere}
+.hrow .l.open{cursor:pointer;border-radius:4px}.hrow .l.open:hover{text-decoration:underline}.hrow .l.open:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hrow .btn{padding:3px 8px;font-size:.8rem}
 .hist .evo-btn{margin:4px 0 10px}
 dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:16px;max-width:min(960px,calc(100vw - 24px));width:100%}
@@ -926,7 +927,106 @@ function parseTOTG(c){
 }
 // exames cujo resultado pode vir escrito como "superior a 90" / "superior a 1800 mcg/g": vira ">90" / ">1800"
 const GT_OK = new Set(["TFG", "Calpro"]);
+// ================= Linha pronta colada de volta =================
+// "LAB (24/09): Hb 11,8↓ / Ht 35,4↓ / BT 0,80 (BD 0,20, BI 0,60) / U1: Leuco 15.700↑, Nitrito Neg / R 1,02" → mesmos exames.
+// Aceita os formatos de data, os separadores, maiúsculas, frações agrupadas, blocos (U1, Gram U, Gaso art/ven) e "(ant. X)".
+const LINE_SEGS = {"u1":"urina", "gram u":"gram", "gaso art":"gasoA", "gaso ven":"gasoV"};
+const LINE_QUAL = {nr:"NR", r:"R", nd:"ND", det:"Det", neg:"Neg", pos:"Pos", aus:"Aus", pres:"Pres", indet:"Indet", tracos:"Traços", rarissimas:"Raríssimas", raros:"Raros", raras:"Raras", alguns:"Alguns", freq:"Freq", numerosos:"Numerosos"};
+let LINE_RE = null;
+function lineRes(){
+  if (LINE_RE) return LINE_RE;
+  const esc = x => x.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
+  const mkRe = abs => new RegExp("^(" + [...new Set(abs)].sort((a, b) => b.length - a.length).map(esc).join("|") + ")(?=\\s)", "i");
+  const lists = {"":EX, urina:EXU, gram:EXG, gasoA:EXGA, gasoV:EXGV};
+  LINE_RE = {};
+  for (const [c, L] of Object.entries(lists)) LINE_RE[c] = {re: mkRe(L.map(e => e.ab).concat(c ? [] : ["TOTG", "R"])), list: L};
+  return LINE_RE;
+}
+function parseLine(text){
+  const raw = String(text || "").replace(/[   ]/g, " ").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const head = /^(?:paciente|nome|idade|sexo|coleta|data (?:de )?nasc)/i;
+  const body = raw.filter(l => !head.test(l) && !/^escores\s*:/i.test(l));
+  if (!body.length || body.length > 4) return null;
+  const R = lineRes(), out = [], found = new Set();
+  let total = 0, junk = 0, nCult = 0;
+  const upper = body.join(" ") === body.join(" ").toUpperCase();
+  const fixQual = v => { const q = LINE_QUAL[norm(v).toLowerCase()]; return q || (upper && /[a-z]/i.test(v) && !/\d/.test(v) ? titleCase(v) : v); };
+  const add = (ab, cat, v, mark, src) => {
+    let ex = null, key, order;
+    if (/^(?:urocultura|hemocultura|cultura)/i.test(ab)){ cat = "cult"; key = "cult:" + ab + (nCult++ ? "#" + nCult : ""); order = ALL.length + nCult; }
+    else if (/^totg$/i.test(ab)){ ab = "TOTG"; key = "TOTG"; cat = "fluoreto"; order = ALL.findIndex(e => e.ab === "Gli"); }
+    else {
+      const L = R[cat || ""].list; ex = L.find(e => e.ab.toLowerCase() === ab.toLowerCase());
+      if (!ex) return false;
+      ab = ex.ab; key = ex.key; cat = ex.cat; order = ALL.indexOf(ex);
+    }
+    if (found.has(key)) return true; found.add(key);
+    out.push({ab, key, cat, ex, v: fixQual(v), src, ni:0, vi:0, order, flag0: mark === "↑" ? "alto" : mark === "↓" ? "baixo" : null, fromLine:true});
+    return true;
+  };
+  for (let line of body){
+    // cabeçalho "LAB (24/09):", "LAB 24/09/26:", "LAB [qua, 24/09]:", "24/09:", "LAB:"
+    const h = line.match(/^([^:]{0,40}?):\s+/);
+    if (h && !LINE_SEGS[norm(h[1]).toLowerCase().trim()] && !R[""].re.test(h[1] + " ")) line = line.slice(h[0].length);
+    const sep = [" / ", " | ", "; "].map(x => [x, line.split(x).length]).sort((a, b) => b[1] - a[1])[0];
+    const S = sep[1] > 1 ? sep[0] : " ";
+    let pos = 0, seg = "", prevAb = "";
+    total += line.length;
+    const endOf = (str, stops) => { let e = str.length; for (const t of stops){ const k = str.indexOf(t); if (k >= 0 && k < e) e = k; } return e; };
+    const item = (str, cat, inGroup) => {   // lê "AB valor↑ (ant. X)" no começo de str; devolve quanto consumiu
+      const re = R[cat || ""].re, m = str.match(re);
+      if (!m) return 0;
+      let ab = m[1], i = m[0].length; while (str[i] === " ") i++;
+      if (/^r$/i.test(ab)) ab = /^tp$/i.test(prevAb) ? "R TP" : "R TTPA";   // na linha a relação sai só como "R"
+      const rest = str.slice(i);
+      let v, n = rest.match(/^(?:[<>≤≥]\s?)?-?\d+(?:[.,]\d+)*(?:\s*\/\s*\d+)?(?:\s*%)?/);
+      if (/^totg$/i.test(ab)){ const e = S === " " ? (rest.match(/^\S+(?:\s*\([^)]*\))?/) || [""])[0].length : endOf(rest, [S]); v = rest.slice(0, e).replace(/[↑↓*]+\s*$/, "").trim(); }   // "99→177→163 (0-60-120')↑"
+      else if (n) v = n[0];
+      else if (S === " " && !inGroup && !cat){
+        const w = rest.match(/^[^\s↑↓*]+(?:\s+1\s*[:/]\s*\d+)?/); if (!w) return 0; v = w[0];
+        const ex = R[cat || ""].list.find(e => e.ab.toLowerCase() === ab.toLowerCase());
+        if (ex && ex.text){ let k = v.length; for (;;){ const nx = rest.slice(k).match(/^\s+([^\s↑↓*]+)/); if (!nx || re.test(rest.slice(k).trimStart()) || R[""].re.test(rest.slice(k).trimStart())) break; k += nx[0].length; } v = rest.slice(0, k); }
+      } else {
+        const stops = [" (ant.", "↑", "↓", "*"]; if (S !== " ") stops.push(S); if (cat || inGroup) stops.push(",", ")");
+        v = rest.slice(0, endOf(rest, stops)).trim();
+      }
+      if (!v) return 0;
+      let j = i + v.length;
+      const mk = str.slice(j).match(/^\s*([↑↓])?\s*\*?/); const mark = mk[1] || ""; j += mk[0].length;
+      const an = str.slice(j).match(/^\s*\(ant\.[^)]*\)/); if (an) j += an[0].length;
+      if (!add(ab, cat, v.trim(), mark, str.slice(0, j).trim())) return 0;
+      prevAb = ab;
+      // frações agrupadas: "BT 0,80 (BD 0,20, BI 0,60)"
+      const g = str.slice(j).match(/^\s*\(/);
+      if (g && !inGroup){
+        let k = j + g[0].length;
+        for (let t = 0; t < 6; t++){ const c = item(str.slice(k), cat, true); if (!c) break; k += c; const sp = str.slice(k).match(/^\s*,\s*/); if (!sp) break; k += sp[0].length; }
+        const cl = str.slice(k).match(/^\s*\)/); if (cl) j = k + cl[0].length;
+      }
+      return j;
+    };
+    while (pos < line.length){
+      const r0 = line.slice(pos), sk = r0.match(/^[\s\/|;,]+/);
+      if (sk){ if (S !== " " && sk[0].includes(S.trim()) && S.trim() !== ",") seg = ""; pos += sk[0].length; continue; }
+      const sg = r0.match(/^(u1|gram u|gaso art|gaso ven)\s*(:|s\/a)/i);
+      if (sg){ seg = sg[2] === ":" ? LINE_SEGS[sg[1].toLowerCase()] : ""; pos += sg[0].length; continue; }
+      const dm = r0.match(/^demais s\/a/i); if (dm){ pos += dm[0].length; continue; }
+      const cu = r0.match(/^((?:urocultura|hemocultura(?: \d+)?|cultura(?: de [a-zà-ú]+)?)(?:#\d+)?)\s+/i);
+      if (cu){ const rest = r0.slice(cu[0].length), e = S === " " ? rest.length : endOf(rest, [S]); add(cu[1], "cult", rest.slice(0, e).replace(/[↑↓]\s*$/, "").trim(), (rest.slice(0, e).match(/([↑↓])\s*$/) || [])[1] || "", r0.slice(0, cu[0].length + e)); pos += cu[0].length + e; continue; }
+      let c = item(r0, seg, false);
+      if (!c && seg){ c = item(r0, "", false); if (c) seg = ""; }
+      if (c){ pos += c; continue; }
+      const e = endOf(r0.slice(1), S === " " ? [" "] : [S, ","]) + 1; junk += e; pos += e;
+    }
+  }
+  if (!out.length || (out.length < 2 && junk) || junk > total * 0.2) return null;
+  out.sort((a, b) => a.order - b.order);
+  for (const it of out) it.suspect = implausible(it);
+  out.missed = []; out.hiddenLines = []; out.fromLine = true;
+  return out;
+}
 function parse(text, diffMode){
+  { const ln = parseLine(text); if (ln) return ln; }   // a própria linha pronta colada de volta
   const lines = text.replace(/\u00ad/g, "-").replace(/[\u00a0\u2007\u202f]/g, " ").split(/\r?\n/);
   // texto simples com a faixa quebrada em linhas ("4.0" / "-" / "5.2"): junta numa linha só, para não virar resultado
   { const nx = k => { for (let j = k + 1; j < lines.length; j++) if (lines[j].trim()) return j; return -1; };
@@ -1829,8 +1929,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.11.04-1";
-const BUILD_HASH = "a29190cc3783327b9d9ea07761ade42ac466fdad47d90dcbd77f49f0bbdcfae4";
+const APP_VERSION = "2026.11.05-1";
+const BUILD_HASH = "caca6e96a0ba5799729c34e35b6c15ed4f1d692d8757cb7e23197e5ffd399396";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -1949,7 +2049,7 @@ function saveCurrent(){
   const h = loadHist();
   const id = patient.key + "|" + patient.dateFull;
   const entry = {id, pkey:patient.key, name:$("pname").value.trim().toUpperCase() || patient.name, date:patient.dateFull,
-                 saved:new Date().toISOString(), line:$("out").innerText.trim(),
+                 saved:new Date().toISOString(), line:$("out").innerText.trim(), birth:patient.birth || null, age:$("age").value.trim() || null, sex:$("sex").value || null,
                  items:items.map(x => ({key:x.key, ab:x.ab, v:x.v, flag:x.flag || null}))};
   const k = h.findIndex(x => x.id === id);
   if (k >= 0){
@@ -1984,13 +2084,37 @@ function renderHist(){
     for (const e of es){
       const r = document.createElement("div"); r.className = "hrow";
       const dt = document.createElement("span"); dt.className = "d"; dt.textContent = ddmm(e.date);
-      const l = document.createElement("span"); l.className = "l"; l.textContent = e.line || e.items.map(x => x.ab + " " + x.v).join(" / ");
+      const l = document.createElement("span"); l.className = "l open"; l.textContent = e.line || e.items.map(x => x.ab + " " + x.v).join(" / ");
+      l.tabIndex = 0; l.setAttribute("role", "button"); l.title = "Abrir este laudo";
+      l.addEventListener("click", () => openHistEntry(e)); l.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); openHistEntry(e); } });
       const c = document.createElement("button"); c.className = "btn"; c.type = "button"; c.textContent = "Copiar";
       c.addEventListener("click", async () => { const ok = await copyText(l.textContent); c.textContent = ok ? "Copiado" : "Falhou"; });
       r.append(dt, l, c); d.append(r);
     }
     box.append(d);
   }
+}
+// Reabre um laudo do histórico na mesma tela de quando foi colado: monta um texto com paciente, nascimento,
+// idade, sexo, coleta e a linha (com as setas), e o app lê como se fosse colado de novo.
+function histText(e){
+  const d = iso => iso ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : "";
+  const birth = e.birth || (/\|(\d{4}-\d{2}-\d{2})$/.exec(e.pkey || "") || [])[1] || null;
+  let age = e.age;
+  if (!age && birth && e.date){ const [by, bm, bd] = birth.split("-").map(Number), [cy, cm, cd] = e.date.split("-").map(Number); age = String(cy - by - (cm < bm || (cm === bm && cd < bd) ? 1 : 0)); }
+  const segs = {}, plain = [];
+  for (const x of e.items){
+    const cat = String(x.key).includes(":") ? x.key.split(":")[0] : "";
+    const t = x.ab + " " + x.v + (x.flag === "alto" ? "↑" : x.flag === "baixo" ? "↓" : "");
+    if (cat && CATS[cat] && CATS[cat].seg) (segs[cat] = segs[cat] || []).push(t); else plain.push(t);
+  }
+  const parts = plain.concat(Object.entries(segs).map(([c, ts]) => CATS[c].seg + ": " + ts.join(", ")));
+  return ["Paciente: " + (e.name || "SEM NOME"), birth ? "Data Nasc.: " + d(birth) : "", age ? "Idade: " + age + " anos" : "",
+          e.sex ? "Sexo: " + (e.sex === "F" ? "Feminino" : "Masculino") : "", e.date ? "Coleta: " + d(e.date) : "", "LAB: " + parts.join(" / ")].filter(Boolean).join("\n");
+}
+function openHistEntry(e){
+  $("src").value = histText(e);
+  extract();
+  const t = $("found"); if (t && t.scrollIntoView) t.scrollIntoView({behavior: "smooth", block: "start"});
 }
 function openEvolution(pkey){
   const es = loadHist().filter(x => x.pkey === pkey).sort((a,b) => a.date.localeCompare(b.date));
