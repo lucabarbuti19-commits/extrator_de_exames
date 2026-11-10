@@ -116,6 +116,8 @@ textarea,input,select,button{font:inherit;color:inherit}
 #src{width:100%;min-height:150px;resize:vertical;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:.92rem;line-height:1.4}
 #src:focus,input:focus,select:focus,#out:focus{outline:2px solid var(--accent);outline-offset:1px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.preset{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px;font-size:.85rem;color:var(--muted);font-weight:600}
+.chip.ask{border-color:var(--alt);box-shadow:0 0 0 1px var(--alt)}.chip.ask .v,.chip.ask .ab{color:var(--alt);font-weight:700}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;cursor:pointer}
 .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:18px 0 8px}
@@ -312,6 +314,9 @@ dialog h2{font-size:1.05rem;margin:0 0 8px}
     <label class="check"><input type="checkbox" id="o-hist"> <b class="t">Guardar histórico neste aparelho</b> <span>fica só neste navegador</span></label>
   </details>
 
+  <div class="preset"><span>Perfil</span><span class="sc-sg" role="radiogroup" aria-label="Perfil">
+    <label><input type="radio" name="preset" value="cg">Clínica geral</label><label><input type="radio" name="preset" value="ps">PS</label><label><input type="radio" name="preset" value="ped">Pediatria</label>
+  </span></div>
   <div class="status">
     <p id="count">Nenhum laudo colado ainda.</p>
     <div class="row" id="bulk" hidden>
@@ -1929,8 +1934,8 @@ const KEY = "linhaExames.v1", HKEY = "linhaExames.hist";
 // gravado no momento da publicação. Se o arquivo servido não bater com ele, chegou alterado ou incompleto.
 // Forma canônica: sem comentários HTML e sem espaços/quebras de linha, porque a hospedagem pode injetar um
 // comentário no <head> (o Netlify faz isso) sem mudar nada do app. Qualquer outra alteração é detectada.
-const APP_VERSION = "2026.11.05-1";
-const BUILD_HASH = "caca6e96a0ba5799729c34e35b6c15ed4f1d692d8757cb7e23197e5ffd399396";
+const APP_VERSION = "2026.11.10-1";
+const BUILD_HASH = "233609065cfd6b9f3d3c224d2a64f55cc61eaa895f172bb93e09a3ce8f431332";
 const fingerprint = h => (h.slice(0, 4) + "-" + h.slice(4, 8)).toUpperCase();
 const verKey = v => { const m = /^(\d{4})\.(\d{2})\.(\d{2})-(\d+)$/.exec(v || ""); return m ? +m[1] * 1e7 + +m[2] * 1e5 + +m[3] * 1e3 + +m[4] : -1; };
 const canonical = t => t.replace(/(const BUILD_HASH = ")[0-9a-f]{64}(";)/, "$1" + "0".repeat(64) + "$2")
@@ -1964,9 +1969,12 @@ async function checkVersion(){
 }
 $("upd-go").addEventListener("click", () => location.reload());
 $("upd-x").addEventListener("click", () => { $("upd").hidden = true; });
-let state = {off:[], prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:true, upper:false, defaults:false, hist:true, escLine:false};
+let state = {off:[], preset:"cg", offBy:null, onBy:null, prefix:"LAB", dfmt:"paren", sep:" / ", diff:"pct", mark:"both", prev:false, compact:false, group:true, upper:false, defaults:false, hist:true, escLine:false};
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch(e){}
 state.group = true;   // "Agrupar frações" sempre começa ligado (pode ser desligado durante o uso)
+// perfis: cada um guarda o que você desmarcou (offBy) ou marcou além do padrão (onBy); o "off" antigo vira o da Clínica geral
+if (!state.offBy) state.offBy = {cg:state.off || [], ps:[], ped:[]};
+if (!state.onBy) state.onBy = {cg:[], ps:[], ped:[]};
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} };
 
 $("prefix").value = state.prefix; $("dfmt").value = state.dfmt; $("sep").value = state.sep; $("diff").value = state.diff; $("mark").value = state.mark;
@@ -1979,13 +1987,25 @@ let items = [];
 let manual = new Map();   // escolhas feitas neste laudo para valores suspeitos
 let patient = {key:null, name:null, dateFull:null};
 // células imaturas e atípicos zerados ficam fora da linha por padrão (dá para marcar)
+const CONFIRM_OFF = new Set(["Plaq", "Hm", "Ht", "Leuco"]);
 const ZERO_OFF = new Set(["Blastos","Mieloblastos","Promielócitos","Mielócitos","Metamielócitos","Atíp"]);
 const zeroOff = it => ZERO_OFF.has(it.ab) && toNum(it.v) === 0;
-const isOn = it => manual.has(it.key) ? manual.get(it.key) : (!state.off.includes(it.key) && !it.suspect && !zeroOff(it));
+// Perfis: o que sai da linha por padrão (exame alterado sempre entra). Pediatria usa o diferencial em valor absoluto.
+const PRESETS = {
+  cg:{name:"Clínica geral", hide:[]},
+  ps:{name:"PS", hide:["VCM","HCM","CHCM","RDW","VPM","Linf","Mono","Eos","Baso","CT","HDL","LDL","TG","Não-HDL","HbA1c","GME","TSH","T4L","T3","T3L","T4","Anti-TPO","B12","Folato","VitD","Ferritina","Fe","IST","CTLF","Transferrina","PSA","PSA L","AU"]},
+  ped:{name:"Pediatria", hide:[], diff:"abs"}
+};
+if (!PRESETS[state.preset]) state.preset = "cg";
+const offL = () => state.offBy[state.preset] || (state.offBy[state.preset] = []);
+const onL = () => state.onBy[state.preset] || (state.onBy[state.preset] = []);
+const presetHide = it => !it.cat || CATS[it.cat].seg ? false : PRESETS[state.preset].hide.includes(it.ab) && !isAlt(it);
+const effDiff = () => PRESETS[state.preset].diff || state.diff;
+const isOn = it => manual.has(it.key) ? manual.get(it.key) : onL().includes(it.key) ? true : (!offL().includes(it.key) && !it.suspect && !zeroOff(it) && !presetHide(it));
 
 function extract(){
   const text = $("src").value;
-  items = text.trim() ? parse(text, state.diff) : [];
+  items = text.trim() ? parse(text, effDiff()) : [];
   manual = new Map();
   scIn = {...SC_INPUT_DEFAULT}; scMan = {}; scBuilt = ""; $("escd").open = false;   // escores: entradas valem só para este laudo; seção sempre começa recolhida
   const p = text.trim() ? patientFrom(text) : {age:null, sex:null, name:null, key:null};
@@ -2244,14 +2264,22 @@ function render(){
       if (isAlt(it)) l.title = (it.flag === "alto" ? "Acima" : "Abaixo") + (it.refDefault ? " da referência padrão do app" : " da referência do laboratório");
       if (it.suspect) l.title = "Valor fora do possível: confira no laudo";
       const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = isOn(it);
+      const ab = document.createElement("span"); ab.className = "ab"; ab.textContent = it.ab;
+      const v = document.createElement("span"); v.className = "v"; const vTxt = (it.v.length > 48 ? it.v.slice(0, 48) + "…" : it.v) + arrow(it); v.textContent = vTxt;
       cb.addEventListener("change", () => {
+        // Plaq, Hm, Ht e Leuco do hemograma: tirar da linha pede um segundo toque em até 3 segundos
+        if (!cb.checked && it.cat === "edta" && CONFIRM_OFF.has(it.ab) && !l.classList.contains("ask")){
+          cb.checked = true; l.classList.add("ask"); ab.textContent = "Tirar " + it.ab + "?"; v.textContent = "toque de novo";
+          l._t = setTimeout(() => { l.classList.remove("ask"); ab.textContent = it.ab; v.textContent = vTxt; }, 3000);
+          return;
+        }
+        if (l.classList.contains("ask")){ clearTimeout(l._t); l.classList.remove("ask"); ab.textContent = it.ab; v.textContent = vTxt; }
         if (it.suspect || zeroOff(it)){ manual.set(it.key, cb.checked); output(); return; }
-        state.off = state.off.filter(a => a !== it.key);
-        if (!cb.checked) state.off.push(it.key);
+        state.offBy[state.preset] = offL().filter(a => a !== it.key);
+        state.onBy[state.preset] = onL().filter(a => a !== it.key);
+        if (!cb.checked) offL().push(it.key); else if (presetHide(it)) onL().push(it.key);
         save(); output();
       });
-      const ab = document.createElement("span"); ab.className = "ab"; ab.textContent = it.ab;
-      const v = document.createElement("span"); v.className = "v"; v.textContent = (it.v.length > 48 ? it.v.slice(0, 48) + "…" : it.v) + arrow(it);
       l.append(cb, ab, v);
       if (it.prev && String(it.prev.v) !== String(it.v)){ const p = document.createElement("span"); p.className = "prev"; p.textContent = "ant. " + it.prev.v; l.append(p); }
       chips.append(l);
@@ -2385,7 +2413,13 @@ $("sc-age").addEventListener("input", e => { $("age").value = e.target.value; $(
 for (const r of document.querySelectorAll('input[name="sc-sex"]')) r.addEventListener("change", () => { if (r.checked){ $("sex").value = r.value; $("sex").dispatchEvent(new Event("change")); } });
 // Monta a linha: exames um a um; urina, gram e gasometria em blocos; frações agrupadas e valor anterior conforme as opções
 const LINE_AB = {"R TP":"R", "R TTPA":"R"};   // na linha, a relação sai só como "R", logo depois do TP/TTPA
+// Linha pronta: exames na linha principal; gasometria (arterial/venosa) sempre em linha própria, logo abaixo
 function buildLine(sel){
+  const isGaso = x => x.cat === "gasoA" || x.cat === "gasoV";
+  const main = buildParts(sel.filter(x => !isGaso(x))), gaso = ["gasoA", "gasoV"].map(c => buildParts(sel.filter(x => x.cat === c))).filter(Boolean);
+  return {main, gaso};
+}
+function buildParts(sel){
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const up = s => state.upper ? s.toUpperCase() : s;
   const red = state.mark === "both" || state.mark === "red", arr = state.mark === "both" || state.mark === "arrow", star = state.mark === "star";
@@ -2482,7 +2516,10 @@ function output(){
   const scLine = state.escLine ? scores.filter(s => s.complete).map(s => s.line) : [];
   const scTxt = scLine.length ? "\n\n" + esc((state.upper ? "ESCORES: " : "Escores: ") + (state.upper ? scLine.map(x => x.toUpperCase()) : scLine).join(state.sep)) : "";
   // sem exame selecionado, a linha pode ter só os escores (preenchidos à mão)
-  $("out").innerHTML = sel.length ? (h ? esc(h) + ": " : "") + buildLine(sel) + scTxt : scTxt ? scTxt.replace(/^\n\n/, "") : "";
+  const L = buildLine(sel), hd = h ? esc(h) + ": " : "";
+  // só gasometria: a linha dela leva a data; com outros exames, vem embaixo sem repetir a data
+  const body = L.main ? hd + L.main + (L.gaso.length ? "\n" + L.gaso.join("\n") : "") : L.gaso.length ? hd + L.gaso.join("\n") : "";
+  $("out").innerHTML = sel.length ? body + scTxt : scTxt ? scTxt.replace(/^\n\n/, "") : "";
   $("copy").disabled = !sel.length && !scTxt;
   $("copy").textContent = "Copiar";
 }
@@ -2511,8 +2548,15 @@ $("o-normal").addEventListener("change", e => { if (e.target.checked){ state.upp
 $("age").addEventListener("input", () => { judgeAll(); render(); });
 $("sex").addEventListener("change", () => { judgeAll(); render(); });
 $("clear").addEventListener("click", () => { $("src").value = ""; $("date").value = ""; $("age").value = ""; $("sex").value = ""; $("filter").value = ""; extract(); $("src").focus(); });
-$("all").addEventListener("click", () => { const abs = items.map(x => x.key); state.off = state.off.filter(a => !abs.includes(a)); for (const x of items) if (x.suspect) manual.set(x.key, true); save(); render(); });
-$("none").addEventListener("click", () => { for (const x of items){ if (x.suspect) manual.set(x.key, false); else if (!state.off.includes(x.key)) state.off.push(x.key); } save(); render(); });
+$("all").addEventListener("click", () => { const abs = items.map(x => x.key); state.offBy[state.preset] = offL().filter(a => !abs.includes(a)); for (const x of items){ if (x.suspect) manual.set(x.key, true); else if (presetHide(x) && !onL().includes(x.key)) onL().push(x.key); } save(); render(); });
+$("none").addEventListener("click", () => { for (const x of items){ if (x.suspect) manual.set(x.key, false); else { state.onBy[state.preset] = onL().filter(a => a !== x.key); if (!offL().includes(x.key)) offL().push(x.key); } } save(); render(); });
+// perfil: Clínica geral, PS, Pediatria
+for (const r of document.querySelectorAll('input[name="preset"]')){
+  r.checked = r.value === state.preset;
+  r.addEventListener("change", () => { if (!r.checked) return; state.preset = r.value; save(); syncDiff(); extract(); });
+}
+function syncDiff(){ const d = $("diff"); d.value = effDiff(); d.disabled = !!PRESETS[state.preset].diff; d.title = d.disabled ? "No perfil Pediatria o diferencial é sempre em valor absoluto" : ""; }
+syncDiff();
 $("sample").addEventListener("click", () => {
   $("src").value = [
     "LABORATÓRIO EXEMPLO - Paciente: Fulano de Tal  Nascimento: 01/01/1960",
